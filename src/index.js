@@ -1,14 +1,162 @@
 import MapboxDraw from '@mapbox/mapbox-gl-draw';
+
+// const Constants = require('../constants');
+// const doubleClickZoom = require('../lib/double_click_zoom');
+// const createSupplementaryPoints = require('../lib/create_supplementary_points');
+import Constants from '@mapbox/mapbox-gl-draw/src/constants';
+import doubleClickZoom from '@mapbox/mapbox-gl-draw/src/lib/double_click_zoom';
+import createSupplementaryPoints from '@mapbox/mapbox-gl-draw/src/lib/create_supplementary_points';
+
 import * as turf from '@turf/turf';
 
-export const TxRectMode = MapboxDraw.modes.direct_select;
 
+
+
+export const TxRectMode = {};
+
+
+// TxRectMode.toDisplayFeatures = function(state, geojson, display) {
+//     display(geojson);
+// };
+TxRectMode.toDisplayFeatures = function(state, geojson, push) {
+    if (state.featureId === geojson.properties.id) {
+        geojson.properties.active = Constants.activeStates.ACTIVE;
+        push(geojson);
+        createSupplementaryPoints(geojson, {
+            map: this.map,
+            midpoints: false,
+            selectedPaths: state.selectedCoordPaths
+        }).forEach(push);
+        this.createRotationPoint(geojson).forEach(push);
+    } else {
+        geojson.properties.active = Constants.activeStates.INACTIVE;
+        push(geojson);
+    }
+
+    // this.fireActionable(state);
+    this.setActionableState({
+        combineFeatures: false,
+        uncombineFeatures: false,
+        trash: false
+    });
+};
+
+TxRectMode.onSetup = function(opts) {
+    const featureId = opts.featureId;
+    const feature = this.getFeature(featureId);
+
+    if (!feature) {
+        throw new Error('You must provide a featureId to enter direct_select mode');
+    }
+
+    if (feature.type != Constants.geojsonTypes.POLYGON) {
+        throw new TypeError('tx_rect mode doesn\'t handle only rectangles');
+    }
+    if (feature.coordinates === undefined
+        || feature.coordinates.length != 1
+        || feature.coordinates[0].length != 4) {
+        throw new TypeError('tx_rect mode doesn\'t handle only rectangles');
+    }
+
+    const state = {
+        featureId,
+        feature,
+        dragMoveLocation: opts.startPos || null,
+        dragMoving: false,
+        canDragMove: false,
+        selectedCoordPaths: opts.coordPath ? [opts.coordPath] : []
+    };
+
+    // TODO why I need this?
+    this.setSelectedCoordinates(this.pathsToCoordinates(featureId, state.selectedCoordPaths));
+    this.setSelected(featureId);
+    doubleClickZoom.disable(this);
+
+    this.setActionableState({
+        trash: true
+    });
+
+    return state;
+};
+
+TxRectMode.onStop = function() {
+    doubleClickZoom.enable(this);
+    this.clearSelectedCoordinates();
+};
+
+// TODO why I need this?
+TxRectMode.pathsToCoordinates = function(featureId, paths) {
+    return paths.map(coord_path => { return { feature_id: featureId, coord_path }; });
+};
+
+TxRectMode.createRotationPoint = function(geojson) {
+    const { type, coordinates } = geojson.geometry;
+    const featureId = geojson.properties && geojson.properties.id;
+
+    let rotationPoints = [];
+    if (type === Constants.geojsonTypes.POLYGON
+        && coordinates && coordinates.length == 1 && coordinates[0].length >= 5) {
+        var c0 = coordinates[0][0];
+        var c1 = coordinates[0][1];
+        var cR = turf.midpoint(turf.point(c0), turf.point(c1)).geometry.coordinates;
+
+        rotationPoints.push({
+                type: Constants.geojsonTypes.FEATURE,
+                properties: {
+                    meta: 'rotate_point',
+                    parent: featureId,
+                    lng: cR[0],
+                    lat: cR[1],
+                    // coord_path: endVertex.properties.coord_path
+                },
+                geometry: {
+                    type: Constants.geojsonTypes.POINT,
+                    coordinates: cR
+                }
+            }
+        );
+
+
+    }
+    return rotationPoints;
+};
+
+// return {
+//     type: Constants.geojsonTypes.FEATURE,
+//     properties: {
+//         meta: Constants.meta.MIDPOINT,
+//         parent: parent,
+//         lng: mid.lng,
+//         lat: mid.lat,
+//         coord_path: endVertex.properties.coord_path
+//     },
+//     geometry: {
+//         type: Constants.geojsonTypes.POINT,
+//         coordinates: [mid.lng, mid.lat]
+//     }
+// };
 
 // 0. inherit from DirectSelect mode
 // 1. forbid adding midpoints: DirectSelect.onMidpoint
 // 2. forbid deleting midpoints: DirectSelect.onTrash
 // 3. implement rotation
 // 4. implement scale on point move
+
+
+
+// TxRectMode.prototype = Object.create(MapboxDraw.modes.direct_select);
+// export const TxRectMode = Object.create(MapboxDraw.modes.direct_select);
+
+// TxRectMode.prototype.onMidpoint = function(state, e) {
+//     console.log('onMidpoint()');
+//     // this.startDragging(state, e);
+//     // const about = e.featureTarget.properties;
+//     // state.feature.addCoordinate(about.coord_path, about.lng, about.lat);
+//     // this.fireUpdate();
+//     // state.selectedCoordPaths = [about.coord_path];
+// };
+
+
 
 // ----Demo----
 
@@ -59,6 +207,12 @@ function tx_rect_mode_demo_map_onload(event) {
                     'circle-color': '#fbb03b'
                 }
             },
+
+
+
+
+
+
             {
                 'id': 'gl-draw-polygon-stroke-inactive',
                 'type': 'line',
@@ -133,7 +287,7 @@ function tx_rect_mode_demo_map_onload(event) {
                     ['!=', 'mode', 'static']
                 ],
                 'paint': {
-                    'circle-radius': 5,
+                    'circle-radius': 10,
                     'circle-color': '#fff'
                 }
             },
@@ -146,10 +300,11 @@ function tx_rect_mode_demo_map_onload(event) {
                     ['!=', 'mode', 'static']
                 ],
                 'paint': {
-                    'circle-radius': 3,
+                    'circle-radius': 6,
                     'circle-color': '#fbb03b'
                 }
             },
+
             {
                 'id': 'gl-draw-point-point-stroke-inactive',
                 'type': 'circle',
@@ -248,7 +403,46 @@ function tx_rect_mode_demo_map_onload(event) {
                     'circle-radius': 5,
                     'circle-color': '#404040'
                 }
-            }
+            },
+
+
+            // {
+            //     'id': 'gl-draw-polygon-rotate-point',
+            //     'type': 'circle',
+            //     'filter': ['all',
+            //         ['==', '$type', 'Point'],
+            //         ['==', 'meta', 'rotate_point']],
+            //     'paint': {
+            //         'circle-radius': 5,
+            //         'circle-color': '#fbb03b'
+            //     }
+            // },
+            {
+                'id': 'gl-draw-polygon-rotate-point-stroke',
+                'type': 'circle',
+                'filter': ['all',
+                    ['==', 'meta', 'rotate_point'],
+                    ['==', '$type', 'Point'],
+                    ['!=', 'mode', 'static']
+                ],
+                'paint': {
+                    'circle-radius': 15,
+                    'circle-color': '#fff'
+                }
+            },
+            {
+                'id': 'gl-draw-polygon-rotate-point',
+                'type': 'circle',
+                'filter': ['all',
+                    ['==', 'meta', 'rotate_point'],
+                    ['==', '$type', 'Point'],
+                    ['!=', 'mode', 'static']
+                ],
+                'paint': {
+                    'circle-radius': 8,
+                    'circle-color': '#fbb03b'
+                }
+            },
         ]
     });
 
