@@ -8,7 +8,9 @@ module.exports = {
     output: {
         // library: 'app',
         // libraryTarget: 'umd',
-        filename: 'tx-rect-mode.js',
+        libraryTarget: 'var',
+        library: 'TxRectMode',
+        filename: 'mapbox-gl-draw-rotate-scale-rect-mode.js',
         path: path.resolve(__dirname, 'dist')
     },
     module: {
@@ -23,4 +25,9 @@ module.exports = {
         ]
     },
     watch: true,
+
+    node: {
+        // https://github.com/mapbox/mapbox-gl-draw/issues/626
+        fs: "empty"
+    }
 };

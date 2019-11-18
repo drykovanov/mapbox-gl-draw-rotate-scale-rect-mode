@@ -6,6 +6,9 @@
     <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
     <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.5.0/mapbox-gl.js'></script>
     <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.5.0/mapbox-gl.css' rel='stylesheet' />
+
+    <script src='../dist/mapbox-gl-draw-rotate-scale-rect-mode.js'></script>
+
     <style>
         body { margin:0; padding:0; }
         #map { position:absolute; top:0; bottom:0; width:100%; }
@@ -13,20 +16,13 @@
 </head>
 <body>
 
-
     <div class="map" id="map"></div>
 
     <script>
-        mapboxgl.accessToken = 'pk.eyJ1IjoiZHJ5a292YW5vdiIsImEiOiJjazM0OG9hYW4wenR4M2xtajVseW1qYjY3In0.YnbkeuaBiSaDOn7eYDAXsQ';
-        var map = new mapboxgl.Map({
-            container: 'map', // container id
-            style: 'mapbox://styles/mapbox/streets-v11', // stylesheet location
-            center: [-73.93, 40.73], // starting position [lng, lat]
-            zoom: 10 // starting zoom
-        });
+        window.onload = function() {
+            TxRectMode.tx_rect_mode_demo();
+        };
 
-
-        
     </script>
 </body>
 </html>
