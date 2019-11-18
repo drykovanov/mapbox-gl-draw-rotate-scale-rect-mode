@@ -1,8 +1,16 @@
 import MapboxDraw from '@mapbox/mapbox-gl-draw';
 import * as turf from '@turf/turf';
 
-export const TxRectMode = {};
+export const TxRectMode = MapboxDraw.modes.direct_select;
 
+
+// 0. inherit from DirectSelect mode
+// 1. forbid adding midpoints: DirectSelect.onMidpoint
+// 2. forbid deleting midpoints: DirectSelect.onTrash
+// 3. implement rotation
+// 4. implement scale on point move
+
+// ----Demo----
 
 function tx_rect_mode_demo_map_onload(event) {
 
@@ -12,7 +20,7 @@ function tx_rect_mode_demo_map_onload(event) {
         displayControlsDefault: true,
         // styles: drawStyles,
         modes: Object.assign({
-            draw_rect: TxRectMode,
+            tx_rect: TxRectMode,
         }, MapboxDraw.modes),
 
         styles: [
@@ -298,7 +306,8 @@ function tx_rect_mode_demo_map_onload(event) {
 
     draw.add(polygon);
     // draw.changeMode('mode', opts);
-    draw.changeMode('direct_select', {
+    // tx_rect, direct_select
+    draw.changeMode('tx_rect', {
         featureId: polygon.id
     });
 }
