@@ -4,6 +4,8 @@
   "description": "mapbox-gl-draw plugin to scale and rotate rectangle on the map",
   "main": "src/index.js",
   "scripts": {
+    "dev": "npx webpack --progress",
+    "build": "npx webpack",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -17,6 +19,11 @@
   },
   "homepage": "https://github.com/drykovanov/mapbox-gl-draw-rotate-scale-rect-mode#readme",
   "dependencies": {
-    "@mapbox/mapbox-gl-draw": "^1.1.2"
+    "@mapbox/mapbox-gl-draw": "^1.1.2",
+    "mapbox-gl": "^1.5.0"
+  },
+  "devDependencies": {
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.10"
   }
 }
