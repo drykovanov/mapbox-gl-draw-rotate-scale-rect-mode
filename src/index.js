@@ -3,14 +3,16 @@ import MapboxDraw from '@mapbox/mapbox-gl-draw';
 // const Constants = require('../constants');
 // const doubleClickZoom = require('../lib/double_click_zoom');
 // const createSupplementaryPoints = require('../lib/create_supplementary_points');
+// const CommonSelectors = require('../lib/common_selectors');
+// const moveFeatures = require('../lib/move_features');
 import Constants from '@mapbox/mapbox-gl-draw/src/constants';
 import doubleClickZoom from '@mapbox/mapbox-gl-draw/src/lib/double_click_zoom';
 import createSupplementaryPoints from '@mapbox/mapbox-gl-draw/src/lib/create_supplementary_points';
+import CommonSelectors from '@mapbox/mapbox-gl-draw/src/lib/common_selectors';
+import moveFeatures from '@mapbox/mapbox-gl-draw/src/lib/move_features';
+
 
 import * as turf from '@turf/turf';
-
-
-
 
 export const TxRectMode = {};
 
@@ -119,6 +121,70 @@ TxRectMode.createRotationPoint = function(geojson) {
 
     }
     return rotationPoints;
+};
+
+TxRectMode.startDragging = function(state, e) {
+    this.map.dragPan.disable();
+    state.canDragMove = true;
+    state.dragMoveLocation = e.lngLat;
+};
+
+TxRectMode.stopDragging = function(state) {
+    this.map.dragPan.enable();
+    state.dragMoving = false;
+    state.canDragMove = false;
+    state.dragMoveLocation = null;
+};
+
+TxRectMode.onFeature = function(state, e) {
+    if (state.selectedCoordPaths.length === 0) this.startDragging(state, e);
+    else this.stopDragging(state);
+};
+
+TxRectMode.onTouchStart = TxRectMode.onMouseDown = function(state, e) {
+    // if (isVertex(e)) return this.onVertex(state, e);
+    if (CommonSelectors.isActiveFeature(e)) return this.onFeature(state, e);
+    // if (isMidpoint(e)) return this.onMidpoint(state, e);
+};
+
+
+TxRectMode.onDrag = function(state, e) {
+    if (state.canDragMove !== true) return;
+    state.dragMoving = true;
+    e.originalEvent.stopPropagation();
+
+    const delta = {
+        lng: e.lngLat.lng - state.dragMoveLocation.lng,
+        lat: e.lngLat.lat - state.dragMoveLocation.lat
+    };
+    if (state.selectedCoordPaths.length > 0) this.dragVertex(state, e, delta);
+    else this.dragFeature(state, e, delta);
+
+    state.dragMoveLocation = e.lngLat;
+};
+
+TxRectMode.dragFeature = function(state, e, delta) {
+    moveFeatures(this.getSelected(), delta);
+    state.dragMoveLocation = e.lngLat;
+};
+
+TxRectMode.fireUpdate = function() {
+    this.map.fire(Constants.events.UPDATE, {
+        action: Constants.updateActions.CHANGE_COORDINATES,
+        features: this.getSelected().map(f => f.toGeoJSON())
+    });
+};
+
+TxRectMode.onMouseOut = function(state) {
+    // As soon as you mouse leaves the canvas, update the feature
+    if (state.dragMoving) this.fireUpdate();
+};
+
+TxRectMode.onTouchEnd = TxRectMode.onMouseUp = function(state) {
+    if (state.dragMoving) {
+        this.fireUpdate();
+    }
+    this.stopDragging(state);
 };
 
 // return {
