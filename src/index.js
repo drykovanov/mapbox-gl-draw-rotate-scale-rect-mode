@@ -245,7 +245,7 @@ TxRectMode.onDrag = function(state, e) {
 };
 
 TxRectMode.dragRotateVertex = function(state, e, delta) {
-    console.log('dragRotateVertex: ' + e.lngLat + ' -> ' + state.dragMoveLocation);
+    // console.log('dragRotateVertex: ' + e.lngLat + ' -> ' + state.dragMoveLocation);
 
     if (state.rotation === undefined || state.rotation == null) {
         console.error('state.rotation required');
@@ -271,25 +271,6 @@ TxRectMode.dragRotateVertex = function(state, e, delta) {
 
     state.feature.incomingCoords(rotatedFeature.geometry.coordinates);
 };
-
-// TxRectMode.dragVertex = function(state, e, delta) {
-//     const selectedCoords = state.selectedCoordPaths.map(coord_path => state.feature.getCoordinate(coord_path));
-//     const selectedCoordPoints = selectedCoords.map(coords => ({
-//         type: Constants.geojsonTypes.FEATURE,
-//         properties: {},
-//         geometry: {
-//             type: Constants.geojsonTypes.POINT,
-//             coordinates: coords
-//         }
-//     }));
-//
-//     const constrainedDelta = constrainFeatureMovement(selectedCoordPoints, delta);
-//     for (let i = 0; i < selectedCoords.length; i++) {
-//         const coord = selectedCoords[i];
-//         state.feature.updateCoordinate(state.selectedCoordPaths[i], coord[0] + constrainedDelta.lng, coord[1] + constrainedDelta.lat);
-//     }
-// };
-
 
 TxRectMode.dragFeature = function(state, e, delta) {
     moveFeatures(this.getSelected(), delta);
