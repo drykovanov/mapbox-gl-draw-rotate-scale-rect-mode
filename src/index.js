@@ -317,41 +317,11 @@ TxRectMode.clickInactive = function () {
     // this.changeMode(Constants.modes.SIMPLE_SELECT);
 };
 
-// return {
-//     type: Constants.geojsonTypes.FEATURE,
-//     properties: {
-//         meta: Constants.meta.MIDPOINT,
-//         parent: parent,
-//         lng: mid.lng,
-//         lat: mid.lat,
-//         coord_path: endVertex.properties.coord_path
-//     },
-//     geometry: {
-//         type: Constants.geojsonTypes.POINT,
-//         coordinates: [mid.lng, mid.lat]
-//     }
-// };
-
 // 0. inherit from DirectSelect mode
 // 1. forbid adding midpoints: DirectSelect.onMidpoint
 // 2. forbid deleting midpoints: DirectSelect.onTrash
 // 3. implement rotation
 // 4. implement scale on point move
-
-
-
-// TxRectMode.prototype = Object.create(MapboxDraw.modes.direct_select);
-// export const TxRectMode = Object.create(MapboxDraw.modes.direct_select);
-
-// TxRectMode.prototype.onMidpoint = function(state, e) {
-//     console.log('onMidpoint()');
-//     // this.startDragging(state, e);
-//     // const about = e.featureTarget.properties;
-//     // state.feature.addCoordinate(about.coord_path, about.lng, about.lat);
-//     // this.fireUpdate();
-//     // state.selectedCoordPaths = [about.coord_path];
-// };
-
 
 
 // ----Demo----
