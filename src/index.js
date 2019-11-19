@@ -121,11 +121,6 @@ TxRectMode.stopDragging = function(state) {
     state.dragMoveLocation = null;
 };
 
-TxRectMode.onFeature = function(state, e) {
-    if (state.selectedCoordPaths.length === 0) this.startDragging(state, e);
-    else this.stopDragging(state);
-};
-
 const isRotatePoint = CommonSelectors.isOfMetaType(Constants.meta.MIDPOINT);
 const isVertex = CommonSelectors.isOfMetaType(Constants.meta.VERTEX);
 
@@ -154,6 +149,11 @@ TxRectMode.onRotatePoint = function(state, e) {
     this.startDragging(state, e);
     const about = e.featureTarget.properties;
     state.selectedCoordPaths = [about.coord_path];
+};
+
+TxRectMode.onFeature = function(state, e) {
+    state.selectedCoordPaths = [];
+    this.startDragging(state, e);
 };
 
 TxRectMode.computeAxes = function(polygon, state) {
