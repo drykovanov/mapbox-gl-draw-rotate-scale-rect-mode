@@ -253,7 +253,6 @@ TxRectMode.dragRotateVertex = function(state, e, delta) {
     }
 
     var polygon = state.feature.toGeoJSON();
-    var polygon1 = this.getSelected();
     var m1 = turf.point([e.lngLat.lng, e.lngLat.lat]);
     var heading1 = turf.bearing(turf.point(state.rotation.center), m1);
 
