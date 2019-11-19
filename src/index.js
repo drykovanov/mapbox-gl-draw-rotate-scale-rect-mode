@@ -1,14 +1,12 @@
 import MapboxDraw from '@mapbox/mapbox-gl-draw';
 
-// const Constants = require('../constants');
-// const doubleClickZoom = require('../lib/double_click_zoom');
-// const createSupplementaryPoints = require('../lib/create_supplementary_points');
-// const CommonSelectors = require('../lib/common_selectors');
-// const moveFeatures = require('../lib/move_features');
 import Constants from '@mapbox/mapbox-gl-draw/src/constants';
 import doubleClickZoom from '@mapbox/mapbox-gl-draw/src/lib/double_click_zoom';
 import createSupplementaryPoints from '@mapbox/mapbox-gl-draw/src/lib/create_supplementary_points';
 import CommonSelectors from '@mapbox/mapbox-gl-draw/src/lib/common_selectors';
+import constrainFeatureMovement from '@mapbox/mapbox-gl-draw/src/lib/constrain_feature_movement';
+
+
 import moveFeatures from '@mapbox/mapbox-gl-draw/src/lib/move_features';
 
 
@@ -24,12 +22,13 @@ TxRectMode.toDisplayFeatures = function(state, geojson, push) {
     if (state.featureId === geojson.properties.id) {
         geojson.properties.active = Constants.activeStates.ACTIVE;
         push(geojson);
-        createSupplementaryPoints(geojson, {
+        var suppPoints = createSupplementaryPoints(geojson, {
             map: this.map,
             midpoints: false,
             selectedPaths: state.selectedCoordPaths
-        }).forEach(push);
-        this.createRotationPoint(geojson).forEach(push);
+        });
+        suppPoints.forEach(push);
+        this.createRotationPoint(geojson, suppPoints[0], suppPoints[1]).forEach(push);
     } else {
         geojson.properties.active = Constants.activeStates.INACTIVE;
         push(geojson);
@@ -91,25 +90,21 @@ TxRectMode.pathsToCoordinates = function(featureId, paths) {
     return paths.map(coord_path => { return { feature_id: featureId, coord_path }; });
 };
 
-TxRectMode.createRotationPoint = function(geojson) {
+TxRectMode.createRotationPoint = function(geojson, v0, v1) {
     const { type, coordinates } = geojson.geometry;
     const featureId = geojson.properties && geojson.properties.id;
 
     let rotationPoints = [];
-    if (type === Constants.geojsonTypes.POLYGON
-        && coordinates && coordinates.length == 1 && coordinates[0].length >= 5) {
-        var c0 = coordinates[0][0];
-        var c1 = coordinates[0][1];
-        var cR = turf.midpoint(turf.point(c0), turf.point(c1)).geometry.coordinates;
-
+    if (type === Constants.geojsonTypes.POLYGON && v0 && v1) {
+        var cR = turf.midpoint(v0, v1).geometry.coordinates;
         rotationPoints.push({
                 type: Constants.geojsonTypes.FEATURE,
                 properties: {
-                    meta: 'rotate_point',
+                    meta: Constants.meta.MIDPOINT,
                     parent: featureId,
                     lng: cR[0],
                     lat: cR[1],
-                    // coord_path: endVertex.properties.coord_path
+                    coord_path: v1.properties.coord_path
                 },
                 geometry: {
                     type: Constants.geojsonTypes.POINT,
@@ -117,11 +112,41 @@ TxRectMode.createRotationPoint = function(geojson) {
                 }
             }
         );
-
-
     }
     return rotationPoints;
 };
+
+// TxRectMode.createRotationPoint = function(geojson) {
+//     const { type, coordinates } = geojson.geometry;
+//     const featureId = geojson.properties && geojson.properties.id;
+//
+//     let rotationPoints = [];
+//     if (type === Constants.geojsonTypes.POLYGON
+//         && coordinates && coordinates.length == 1 && coordinates[0].length >= 5) {
+//         var c0 = coordinates[0][0];
+//         var c1 = coordinates[0][1];
+//         var cR = turf.midpoint(turf.point(c0), turf.point(c1)).geometry.coordinates;
+//
+//         rotationPoints.push({
+//                 type: Constants.geojsonTypes.FEATURE,
+//                 properties: {
+//                     meta: Constants.meta.MIDPOINT,
+//                     parent: featureId,
+//                     lng: cR[0],
+//                     lat: cR[1],
+//                     // coord_path: endVertex.properties.coord_path
+//                 },
+//                 geometry: {
+//                     type: Constants.geojsonTypes.POINT,
+//                     coordinates: cR
+//                 }
+//             }
+//         );
+//
+//
+//     }
+//     return rotationPoints;
+// };
 
 TxRectMode.startDragging = function(state, e) {
     this.map.dragPan.disable();
@@ -141,12 +166,66 @@ TxRectMode.onFeature = function(state, e) {
     else this.stopDragging(state);
 };
 
+const isRotatePoint = CommonSelectors.isOfMetaType(Constants.meta.MIDPOINT);
+    //CommonSelectors.isOfMetaType('rotate_point');
+
 TxRectMode.onTouchStart = TxRectMode.onMouseDown = function(state, e) {
     // if (isVertex(e)) return this.onVertex(state, e);
+    if (isRotatePoint(e)) return this.onRotatePoint(state, e);
     if (CommonSelectors.isActiveFeature(e)) return this.onFeature(state, e);
     // if (isMidpoint(e)) return this.onMidpoint(state, e);
 };
 
+TxRectMode.onRotatePoint = function(state, e) {
+    console.log('onRotatePoint()');
+    // convert internal MapboxDraw feature to valid GeoJSON:
+    this.computeAxes(state.feature.toGeoJSON(), state);
+
+    this.startDragging(state, e);
+    const about = e.featureTarget.properties;
+    // state.feature.addCoordinate(about.coord_path, about.lng, about.lat);
+    // this.fireUpdate();
+    state.selectedCoordPaths = [about.coord_path];
+};
+
+TxRectMode.computeAxes = function(polygon, state) {
+    // TODO check min 3 points
+    var area = turf.area(polygon);
+    // console.log('Polygon area: ' + area);
+
+    var center = turf.centroid(polygon);
+    // console.log('Polygon center: ' + center.geometry.coordinates);
+
+    var rotPoint = turf.midpoint(
+        turf.point(polygon.geometry.coordinates[0][0]),
+        turf.point(polygon.geometry.coordinates[0][1]));
+    // console.log('Midpoint: ' + rotPoint.geometry.coordinates);
+    var heading = turf.bearing(center, rotPoint);
+
+    state.rotation = {
+        feature0: polygon,  // initial feature state
+        center: center.geometry.coordinates,
+        heading0: heading // rotation start heading
+    }
+};
+
+
+// TxRectMode.onRotatePoint = function (state, e) {
+//     // console.log('onRotatePoint()');
+//     this.startDragging(state, e);
+//     const about = e.featureTarget.properties;
+//     const selectedIndex = state.selectedCoordPaths.indexOf(about.coord_path);
+//
+//     // if (!isShiftDown(e) && selectedIndex === -1) {
+//     //     state.selectedCoordPaths = [about.coord_path];
+//     // } else if (isShiftDown(e) && selectedIndex === -1) {
+//     //     state.selectedCoordPaths.push(about.coord_path);
+//     // }
+//     state.selectedCoordPaths = [about.coord_path];
+//
+//     const selectedCoordinates = this.pathsToCoordinates(state.featureId, state.selectedCoordPaths);
+//     this.setSelectedCoordinates(selectedCoordinates);
+// };
 
 TxRectMode.onDrag = function(state, e) {
     if (state.canDragMove !== true) return;
@@ -157,11 +236,58 @@ TxRectMode.onDrag = function(state, e) {
         lng: e.lngLat.lng - state.dragMoveLocation.lng,
         lat: e.lngLat.lat - state.dragMoveLocation.lat
     };
-    if (state.selectedCoordPaths.length > 0) this.dragVertex(state, e, delta);
-    else this.dragFeature(state, e, delta);
+    if (state.selectedCoordPaths.length > 0)
+        this.dragRotateVertex(state, e, delta);
+    else
+        this.dragFeature(state, e, delta);
 
     state.dragMoveLocation = e.lngLat;
 };
+
+TxRectMode.dragRotateVertex = function(state, e, delta) {
+    console.log('dragRotateVertex: ' + e.lngLat + ' -> ' + state.dragMoveLocation);
+
+    if (state.rotation === undefined || state.rotation == null) {
+        console.error('state.rotation required');
+        return ;
+    }
+
+    var polygon = state.feature.toGeoJSON();
+    var polygon1 = this.getSelected();
+    var m1 = turf.point([e.lngLat.lng, e.lngLat.lat]);
+    var heading1 = turf.bearing(turf.point(state.rotation.center), m1);
+
+    var rotateAngle = heading1 - state.rotation.heading0; // in degrees
+
+    var rotatedFeature = turf.transformRotate(state.rotation.feature0,
+        rotateAngle,
+        {
+           pivot: state.rotation.center,
+            mutate: false,
+        });
+    // TODO update feature
+
+    state.feature.incomingCoords(rotatedFeature.geometry.coordinates);
+};
+
+// TxRectMode.dragVertex = function(state, e, delta) {
+//     const selectedCoords = state.selectedCoordPaths.map(coord_path => state.feature.getCoordinate(coord_path));
+//     const selectedCoordPoints = selectedCoords.map(coords => ({
+//         type: Constants.geojsonTypes.FEATURE,
+//         properties: {},
+//         geometry: {
+//             type: Constants.geojsonTypes.POINT,
+//             coordinates: coords
+//         }
+//     }));
+//
+//     const constrainedDelta = constrainFeatureMovement(selectedCoordPoints, delta);
+//     for (let i = 0; i < selectedCoords.length; i++) {
+//         const coord = selectedCoords[i];
+//         state.feature.updateCoordinate(state.selectedCoordPaths[i], coord[0] + constrainedDelta.lng, coord[1] + constrainedDelta.lat);
+//     }
+// };
+
 
 TxRectMode.dragFeature = function(state, e, delta) {
     moveFeatures(this.getSelected(), delta);
@@ -185,6 +311,27 @@ TxRectMode.onTouchEnd = TxRectMode.onMouseUp = function(state) {
         this.fireUpdate();
     }
     this.stopDragging(state);
+};
+
+TxRectMode.clickActiveFeature = function (state) {
+    state.selectedCoordPaths = [];
+    this.clearSelectedCoordinates();
+    state.feature.changed();
+};
+
+TxRectMode.onClick = function(state, e) {
+    if (CommonSelectors.noTarget(e)) return this.clickNoTarget(state, e);
+    if (CommonSelectors.isActiveFeature(e)) return this.clickActiveFeature(state, e);
+    if (CommonSelectors.isInactiveFeature(e)) return this.clickInactive(state, e);
+    this.stopDragging(state);
+};
+
+TxRectMode.clickNoTarget = function () {
+    // this.changeMode(Constants.modes.SIMPLE_SELECT);
+};
+
+TxRectMode.clickInactive = function () {
+    // this.changeMode(Constants.modes.SIMPLE_SELECT);
 };
 
 // return {
@@ -262,20 +409,18 @@ function tx_rect_mode_demo_map_onload(event) {
                     'fill-opacity': 0.0
                 }
             },
-            {
-                'id': 'gl-draw-polygon-midpoint',
-                'type': 'circle',
-                'filter': ['all',
-                    ['==', '$type', 'Point'],
-                    ['==', 'meta', 'midpoint']],
-                'paint': {
-                    'circle-radius': 3,
-                    'circle-color': '#fbb03b'
-                }
-            },
 
-
-
+            // {
+            //     'id': 'gl-draw-polygon-midpoint',
+            //     'type': 'circle',
+            //     'filter': ['all',
+            //         ['==', '$type', 'Point'],
+            //         ['==', 'meta', 'midpoint']],
+            //     'paint': {
+            //         'circle-radius': 3,
+            //         'circle-color': '#fbb03b'
+            //     }
+            // },
 
 
 
@@ -487,7 +632,7 @@ function tx_rect_mode_demo_map_onload(event) {
                 'id': 'gl-draw-polygon-rotate-point-stroke',
                 'type': 'circle',
                 'filter': ['all',
-                    ['==', 'meta', 'rotate_point'],
+                    ['==', 'meta', 'midpoint'],
                     ['==', '$type', 'Point'],
                     ['!=', 'mode', 'static']
                 ],
@@ -500,7 +645,7 @@ function tx_rect_mode_demo_map_onload(event) {
                 'id': 'gl-draw-polygon-rotate-point',
                 'type': 'circle',
                 'filter': ['all',
-                    ['==', 'meta', 'rotate_point'],
+                    ['==', 'meta', 'midpoint'],
                     ['==', '$type', 'Point'],
                     ['!=', 'mode', 'static']
                 ],
