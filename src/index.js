@@ -609,9 +609,7 @@ function tx_rect_mode_demo_map_onload(event) {
             },
         ]
     });
-
-
-
+    
     // nyc_1911.jpg - 468x760
 
     var im_w = 421;
@@ -639,8 +637,6 @@ function tx_rect_mode_demo_map_onload(event) {
     const polygon = turf.polygon([coordinates]);
     polygon.id = 1;
 
-
-
     map.addSource("test-overlay", {
         "type": "image",
         "url": 'nyc_1911_crop.jpg',
@@ -653,8 +649,6 @@ function tx_rect_mode_demo_map_onload(event) {
         "source": "test-overlay",
         "paint": {"raster-opacity": 0.90},
     });
-
-
 
     map.addControl(draw, 'top-right');
     map.on('draw.update', drawUpdateOverlay.bind({
@@ -674,7 +668,7 @@ function drawUpdateOverlay(e) {
     var feature = e.features[0];
     var coordinates = feature.geometry.coordinates[0].slice(0, 4);
 
-    console.log(coordinates);
+//    console.log(coordinates);
 
     this.map.getSource("test-overlay").setCoordinates(coordinates);
 }
@@ -689,8 +683,4 @@ export function tx_rect_mode_demo() {
     });
 
     map.on('load', tx_rect_mode_demo_map_onload);
-
-
-
-
 }
