@@ -108,38 +108,6 @@ TxRectMode.createRotationPoint = function(geojson, v0, v1) {
     return rotationPoints;
 };
 
-// TxRectMode.createRotationPoint = function(geojson) {
-//     const { type, coordinates } = geojson.geometry;
-//     const featureId = geojson.properties && geojson.properties.id;
-//
-//     let rotationPoints = [];
-//     if (type === Constants.geojsonTypes.POLYGON
-//         && coordinates && coordinates.length == 1 && coordinates[0].length >= 5) {
-//         var c0 = coordinates[0][0];
-//         var c1 = coordinates[0][1];
-//         var cR = turf.midpoint(turf.point(c0), turf.point(c1)).geometry.coordinates;
-//
-//         rotationPoints.push({
-//                 type: Constants.geojsonTypes.FEATURE,
-//                 properties: {
-//                     meta: Constants.meta.MIDPOINT,
-//                     parent: featureId,
-//                     lng: cR[0],
-//                     lat: cR[1],
-//                     // coord_path: endVertex.properties.coord_path
-//                 },
-//                 geometry: {
-//                     type: Constants.geojsonTypes.POINT,
-//                     coordinates: cR
-//                 }
-//             }
-//         );
-//
-//
-//     }
-//     return rotationPoints;
-// };
-
 TxRectMode.startDragging = function(state, e) {
     this.map.dragPan.disable();
     state.canDragMove = true;
