@@ -172,11 +172,8 @@ TxRectMode.computeAxes = function(polygon, state) {
     };
 
     // compute current distances from center for scaling
-    var distances = polygon.geometry.coordinates[0].map((c) => {
-        var p = turf.point(c);
-        var d = turf.distance(center, p, { units: 'meters'});
-        return d;
-    });
+    var distances = polygon.geometry.coordinates[0].map((c) =>
+        turf.distance(center, turf.point(c), { units: 'meters'}) );
 
     state.scaling = {
         feature0: polygon,  // initial feature state
