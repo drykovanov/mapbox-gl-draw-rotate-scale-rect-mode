@@ -159,13 +159,23 @@ TxRectMode.onFeature = function(state, e) {
 };
 
 const isRotatePoint = CommonSelectors.isOfMetaType(Constants.meta.MIDPOINT);
-    //CommonSelectors.isOfMetaType('rotate_point');
+const isVertex = CommonSelectors.isOfMetaType(Constants.meta.VERTEX);
 
 TxRectMode.onTouchStart = TxRectMode.onMouseDown = function(state, e) {
-    // if (isVertex(e)) return this.onVertex(state, e);
+    if (isVertex(e)) return this.onVertex(state, e);
     if (isRotatePoint(e)) return this.onRotatePoint(state, e);
     if (CommonSelectors.isActiveFeature(e)) return this.onFeature(state, e);
     // if (isMidpoint(e)) return this.onMidpoint(state, e);
+};
+
+TxRectMode.onVertex = function(state, e) {
+    console.log('onVertex()');
+    // convert internal MapboxDraw feature to valid GeoJSON:
+    this.computeAxes(state.feature.toGeoJSON(), state);
+
+    this.startDragging(state, e);
+    const about = e.featureTarget.properties;
+    state.selectedCoordPaths = [about.coord_path];
 };
 
 TxRectMode.onRotatePoint = function(state, e) {
@@ -191,7 +201,20 @@ TxRectMode.computeAxes = function(polygon, state) {
         feature0: polygon,  // initial feature state
         center: center.geometry.coordinates,
         heading0: heading // rotation start heading
-    }
+    };
+
+    // compute current distances from center for scaling
+    var distances = polygon.geometry.coordinates[0].map((c) => {
+        var p = turf.point(c);
+        var d = turf.distance(center, p, { units: 'meters'});
+        return d;
+    });
+
+    state.scaling = {
+        feature0: polygon,  // initial feature state
+        center: center.geometry.coordinates,
+        distances: distances
+    };
 };
 
 TxRectMode.onDrag = function(state, e) {
@@ -204,14 +227,14 @@ TxRectMode.onDrag = function(state, e) {
         lat: e.lngLat.lat - state.dragMoveLocation.lat
     };
     if (state.selectedCoordPaths.length > 0)
-        this.dragRotateVertex(state, e, delta);
+        this.dragRotatePoint(state, e, delta);
     else
         this.dragFeature(state, e, delta);
 
     state.dragMoveLocation = e.lngLat;
 };
 
-TxRectMode.dragRotateVertex = function(state, e, delta) {
+TxRectMode.dragRotatePoint = function(state, e, delta) {
     // console.log('dragRotateVertex: ' + e.lngLat + ' -> ' + state.dragMoveLocation);
 
     if (state.rotation === undefined || state.rotation == null) {
