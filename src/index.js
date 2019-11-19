@@ -258,6 +258,9 @@ TxRectMode.dragRotateVertex = function(state, e, delta) {
     var heading1 = turf.bearing(turf.point(state.rotation.center), m1);
 
     var rotateAngle = heading1 - state.rotation.heading0; // in degrees
+    if (CommonSelectors.isShiftDown(e)) {
+        rotateAngle = 5.0 * Math.round(rotateAngle / 5.0);
+    }
 
     var rotatedFeature = turf.transformRotate(state.rotation.feature0,
         rotateAngle,
@@ -661,8 +664,8 @@ function tx_rect_mode_demo_map_onload(event) {
 
     // nyc_1911.jpg - 468x760
 
-    var im_w = 468;
-    var im_h = 760;
+    var im_w = 421;
+    var im_h = 671;
 
     const canvas = map.getCanvas();
     // Get the device pixel ratio, falling back to 1.
@@ -690,7 +693,7 @@ function tx_rect_mode_demo_map_onload(event) {
 
     map.addSource("test-overlay", {
         "type": "image",
-        "url": 'nyc_1911.jpg',
+        "url": 'nyc_1911_crop.jpg',
         "coordinates": [cUL,cUR,cLR,cLL]
     });
 
