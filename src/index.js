@@ -4,20 +4,12 @@ import Constants from '@mapbox/mapbox-gl-draw/src/constants';
 import doubleClickZoom from '@mapbox/mapbox-gl-draw/src/lib/double_click_zoom';
 import createSupplementaryPoints from '@mapbox/mapbox-gl-draw/src/lib/create_supplementary_points';
 import CommonSelectors from '@mapbox/mapbox-gl-draw/src/lib/common_selectors';
-import constrainFeatureMovement from '@mapbox/mapbox-gl-draw/src/lib/constrain_feature_movement';
-
-
 import moveFeatures from '@mapbox/mapbox-gl-draw/src/lib/move_features';
-
 
 import * as turf from '@turf/turf';
 
 export const TxRectMode = {};
 
-
-// TxRectMode.toDisplayFeatures = function(state, geojson, display) {
-//     display(geojson);
-// };
 TxRectMode.toDisplayFeatures = function(state, geojson, push) {
     if (state.featureId === geojson.properties.id) {
         geojson.properties.active = Constants.activeStates.ACTIVE;
@@ -183,23 +175,16 @@ TxRectMode.onRotatePoint = function(state, e) {
 
     this.startDragging(state, e);
     const about = e.featureTarget.properties;
-    // state.feature.addCoordinate(about.coord_path, about.lng, about.lat);
-    // this.fireUpdate();
     state.selectedCoordPaths = [about.coord_path];
 };
 
 TxRectMode.computeAxes = function(polygon, state) {
     // TODO check min 3 points
-    var area = turf.area(polygon);
-    // console.log('Polygon area: ' + area);
-
     var center = turf.centroid(polygon);
-    // console.log('Polygon center: ' + center.geometry.coordinates);
 
     var rotPoint = turf.midpoint(
         turf.point(polygon.geometry.coordinates[0][0]),
         turf.point(polygon.geometry.coordinates[0][1]));
-    // console.log('Midpoint: ' + rotPoint.geometry.coordinates);
     var heading = turf.bearing(center, rotPoint);
 
     state.rotation = {
@@ -208,24 +193,6 @@ TxRectMode.computeAxes = function(polygon, state) {
         heading0: heading // rotation start heading
     }
 };
-
-
-// TxRectMode.onRotatePoint = function (state, e) {
-//     // console.log('onRotatePoint()');
-//     this.startDragging(state, e);
-//     const about = e.featureTarget.properties;
-//     const selectedIndex = state.selectedCoordPaths.indexOf(about.coord_path);
-//
-//     // if (!isShiftDown(e) && selectedIndex === -1) {
-//     //     state.selectedCoordPaths = [about.coord_path];
-//     // } else if (isShiftDown(e) && selectedIndex === -1) {
-//     //     state.selectedCoordPaths.push(about.coord_path);
-//     // }
-//     state.selectedCoordPaths = [about.coord_path];
-//
-//     const selectedCoordinates = this.pathsToCoordinates(state.featureId, state.selectedCoordPaths);
-//     this.setSelectedCoordinates(selectedCoordinates);
-// };
 
 TxRectMode.onDrag = function(state, e) {
     if (state.canDragMove !== true) return;
@@ -267,7 +234,6 @@ TxRectMode.dragRotateVertex = function(state, e, delta) {
            pivot: state.rotation.center,
             mutate: false,
         });
-    // TODO update feature
 
     state.feature.incomingCoords(rotatedFeature.geometry.coordinates);
 };
@@ -609,7 +575,7 @@ function tx_rect_mode_demo_map_onload(event) {
             },
         ]
     });
-    
+
     // nyc_1911.jpg - 468x760
 
     var im_w = 421;
