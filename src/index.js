@@ -131,6 +131,10 @@ TxRectMode.onTouchStart = TxRectMode.onMouseDown = function(state, e) {
     // if (isMidpoint(e)) return this.onMidpoint(state, e);
 };
 
+
+const TX_MODE_SCALE = "tx.scale";
+const TX_MODE_ROTATE = "tx.rotate";
+
 TxRectMode.onVertex = function(state, e) {
     console.log('onVertex()');
     // convert internal MapboxDraw feature to valid GeoJSON:
@@ -139,6 +143,7 @@ TxRectMode.onVertex = function(state, e) {
     this.startDragging(state, e);
     const about = e.featureTarget.properties;
     state.selectedCoordPaths = [about.coord_path];
+    state.txMode = TX_MODE_SCALE;
 };
 
 TxRectMode.onRotatePoint = function(state, e) {
@@ -149,6 +154,7 @@ TxRectMode.onRotatePoint = function(state, e) {
     this.startDragging(state, e);
     const about = e.featureTarget.properties;
     state.selectedCoordPaths = [about.coord_path];
+    state.txMode = TX_MODE_ROTATE;
 };
 
 TxRectMode.onFeature = function(state, e) {
@@ -191,10 +197,19 @@ TxRectMode.onDrag = function(state, e) {
         lng: e.lngLat.lng - state.dragMoveLocation.lng,
         lat: e.lngLat.lat - state.dragMoveLocation.lat
     };
-    if (state.selectedCoordPaths.length > 0)
-        this.dragRotatePoint(state, e, delta);
-    else
+    if (state.selectedCoordPaths.length > 0 && state.txMode) {
+        switch (state.txMode) {
+            case TX_MODE_ROTATE:
+                this.dragRotatePoint(state, e, delta);
+                break;
+            case TX_MODE_SCALE:
+                this.dragScalePoint(state, e, delta);
+                break;
+        }
+    } else {
         this.dragFeature(state, e, delta);
+    }
+
 
     state.dragMoveLocation = e.lngLat;
 };
@@ -224,6 +239,35 @@ TxRectMode.dragRotatePoint = function(state, e, delta) {
         });
 
     state.feature.incomingCoords(rotatedFeature.geometry.coordinates);
+};
+
+TxRectMode.dragScalePoint = function(state, e, delta) {
+    if (state.scaling === undefined || state.scaling == null) {
+        console.error('state.scaling required');
+        return ;
+    }
+
+    var polygon = state.feature.toGeoJSON();
+
+    var center = turf.point(state.scaling.center);
+    var m1 = turf.point([e.lngLat.lng, e.lngLat.lat]);
+
+    var distance = turf.distance(center, m1, { units: 'meters'});
+    var scale = distance / state.scaling.distances[0]; // TODO fix index
+
+    if (CommonSelectors.isShiftDown(e)) {
+        // TODO discrete scaling
+        scale = 0.05 * Math.round(scale / 0.05);
+    }
+
+    var scaledFeature = turf.transformScale(state.scaling.feature0,
+        scale,
+        {
+            origin: state.scaling.center,
+            mutate: false,
+        });
+
+    state.feature.incomingCoords(scaledFeature.geometry.coordinates);
 };
 
 TxRectMode.dragFeature = function(state, e, delta) {
