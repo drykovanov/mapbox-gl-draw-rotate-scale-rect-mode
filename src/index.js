@@ -136,7 +136,7 @@ const TX_MODE_SCALE = "tx.scale";
 const TX_MODE_ROTATE = "tx.rotate";
 
 TxRectMode.onVertex = function(state, e) {
-    console.log('onVertex()');
+    // console.log('onVertex()');
     // convert internal MapboxDraw feature to valid GeoJSON:
     this.computeAxes(state.feature.toGeoJSON(), state);
 
@@ -147,7 +147,7 @@ TxRectMode.onVertex = function(state, e) {
 };
 
 TxRectMode.onRotatePoint = function(state, e) {
-    console.log('onRotatePoint()');
+    // console.log('onRotatePoint()');
     // convert internal MapboxDraw feature to valid GeoJSON:
     this.computeAxes(state.feature.toGeoJSON(), state);
 
@@ -239,6 +239,8 @@ TxRectMode.dragRotatePoint = function(state, e, delta) {
         });
 
     state.feature.incomingCoords(rotatedFeature.geometry.coordinates);
+    // TODO add option for this:
+    this.fireUpdate();
 };
 
 TxRectMode.dragScalePoint = function(state, e, delta) {
@@ -268,11 +270,15 @@ TxRectMode.dragScalePoint = function(state, e, delta) {
         });
 
     state.feature.incomingCoords(scaledFeature.geometry.coordinates);
+    // TODO add option for this:
+    this.fireUpdate();
 };
 
 TxRectMode.dragFeature = function(state, e, delta) {
     moveFeatures(this.getSelected(), delta);
     state.dragMoveLocation = e.lngLat;
+    // TODO add option for this:
+    this.fireUpdate();
 };
 
 TxRectMode.fireUpdate = function() {
@@ -284,7 +290,9 @@ TxRectMode.fireUpdate = function() {
 
 TxRectMode.onMouseOut = function(state) {
     // As soon as you mouse leaves the canvas, update the feature
-    if (state.dragMoving) this.fireUpdate();
+    if (state.dragMoving) {
+        this.fireUpdate();
+    }
 };
 
 TxRectMode.onTouchEnd = TxRectMode.onMouseUp = function(state) {
@@ -648,7 +656,7 @@ function tx_rect_mode_demo_map_onload(event) {
         var rect = canvas.getBoundingClientRect();
         const w = rect.width;
         const h = rect.height;
-        console.log('canvas: ' + w + 'x' + h);
+        // console.log('canvas: ' + w + 'x' + h);
 
         while (im_w >= (0.8 * w) || im_h >= (0.8 * h)) {
             im_w = Math.round(0.8 * im_w);
