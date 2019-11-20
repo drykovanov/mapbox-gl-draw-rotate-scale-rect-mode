@@ -88,19 +88,26 @@ TxRectMode.createRotationPoint = function(geojson, v0, v1) {
 
     let rotationPoints = [];
     if (type === Constants.geojsonTypes.POLYGON && v0 && v1) {
-        var cR = turf.midpoint(v0, v1).geometry.coordinates;
+        var center = turf.centroid(geojson);
+        var cR0 = turf.midpoint(v0, v1).geometry.coordinates;
+
+        var heading = turf.bearing(center, cR0);
+        var distance0 = turf.distance(center, cR0);
+        var distance1 = 1.1 * distance0; // TODO depends on map scale
+        var cR1 = turf.destination(center, distance1, heading, {}).geometry.coordinates;
+
         rotationPoints.push({
                 type: Constants.geojsonTypes.FEATURE,
                 properties: {
                     meta: Constants.meta.MIDPOINT,
                     parent: featureId,
-                    lng: cR[0],
-                    lat: cR[1],
+                    lng: cR1[0],
+                    lat: cR1[1],
                     coord_path: v1.properties.coord_path
                 },
                 geometry: {
                     type: Constants.geojsonTypes.POINT,
-                    coordinates: cR
+                    coordinates: cR1
                 }
             }
         );
