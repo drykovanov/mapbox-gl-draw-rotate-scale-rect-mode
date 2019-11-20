@@ -86,7 +86,7 @@ TxRectMode.createRotationPoint = function(geojson, v0, v1) {
     const { type, coordinates } = geojson.geometry;
     const featureId = geojson.properties && geojson.properties.id;
 
-    let rotationPoints = [];
+    let rotationWidgets = [];
     if (type === Constants.geojsonTypes.POLYGON && v0 && v1) {
         var center = turf.centroid(geojson);
         var cR0 = turf.midpoint(v0, v1).geometry.coordinates;
@@ -96,7 +96,7 @@ TxRectMode.createRotationPoint = function(geojson, v0, v1) {
         var distance1 = 1.1 * distance0; // TODO depends on map scale
         var cR1 = turf.destination(center, distance1, heading, {}).geometry.coordinates;
 
-        rotationPoints.push({
+        rotationWidgets.push({
                 type: Constants.geojsonTypes.FEATURE,
                 properties: {
                     meta: Constants.meta.MIDPOINT,
@@ -111,8 +111,27 @@ TxRectMode.createRotationPoint = function(geojson, v0, v1) {
                 }
             }
         );
+
+        rotationWidgets.push({
+                type: Constants.geojsonTypes.FEATURE,
+                properties: {
+                    meta: Constants.meta.MIDPOINT,
+                    parent: featureId,
+                    // lng: cR1[0],
+                    // lat: cR1[1],
+                    coord_path: v1.properties.coord_path
+                },
+                geometry: {
+                    type: Constants.geojsonTypes.LINE_STRING,
+                    coordinates: [cR0, cR1]
+                }
+            }
+        );
+
+
+
     }
-    return rotationPoints;
+    return rotationWidgets;
 };
 
 TxRectMode.startDragging = function(state, e) {
@@ -583,6 +602,26 @@ var drawStyle = [
     //         'circle-color': '#fbb03b'
     //     }
     // },
+
+    {
+        'id': 'gl-draw-line-rotate-point',
+        'type': 'line',
+        'filter': ['all',
+            ['==', 'meta', 'midpoint'],
+            ['==', '$type', 'LineString'],
+            ['!=', 'mode', 'static']
+            // ['==', 'active', 'true']
+        ],
+        'layout': {
+            'line-cap': 'round',
+            'line-join': 'round'
+        },
+        'paint': {
+            'line-color': '#fbb03b',
+            'line-dasharray': [0.2, 2],
+            'line-width': 2
+        }
+    },
     {
         'id': 'gl-draw-polygon-rotate-point-stroke',
         'type': 'circle',
