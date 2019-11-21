@@ -61,7 +61,7 @@ TxRectMode.onSetup = function(opts) {
         canDragMove: false,
         selectedCoordPaths: opts.coordPath ? [opts.coordPath] : []
     };
-    
+
     this.setSelectedCoordinates(this.pathsToCoordinates(featureId, state.selectedCoordPaths));
     this.setSelected(featureId);
     doubleClickZoom.disable(this);
@@ -225,19 +225,35 @@ TxRectMode.onFeature = function(state, e) {
     this.startDragging(state, e);
 };
 
+TxRectMode.coordinateIndex = function(coordPaths) {
+    if (coordPaths.length >= 1) {
+        var parts = coordPaths[0].split('.');
+        return parseInt(parts[parts.length - 1]);
+    } else {
+        return 0;
+    }
+};
+
 TxRectMode.computeAxes = function(polygon, state) {
     // TODO check min 3 points
     var center = turf.centroid(polygon);
+    var corners = polygon.geometry.coordinates[0].slice(0);
 
-    var rotPoint = turf.midpoint(
-        turf.point(polygon.geometry.coordinates[0][0]),
-        turf.point(polygon.geometry.coordinates[0][1]));
-    var heading = turf.bearing(center, rotPoint);
+    var c0 = corners[corners.length - 1];
+    var headings = corners.map((c1) => {
+        var rotPoint = turf.midpoint(
+            turf.point(c0),
+            turf.point(c1));
+        var heading = turf.bearing(center, rotPoint);
+        c0 = c1;
+        return heading;
+    });
+    headings = headings.slice(1);
 
     state.rotation = {
         feature0: polygon,  // initial feature state
         center: center.geometry.coordinates,
-        heading0: heading // rotation start heading
+        headings: headings, // rotation start heading for each point
     };
 
     // compute current distances from center for scaling
@@ -289,7 +305,11 @@ TxRectMode.dragRotatePoint = function(state, e, delta) {
     var m1 = turf.point([e.lngLat.lng, e.lngLat.lat]);
     var heading1 = turf.bearing(turf.point(state.rotation.center), m1);
 
-    var rotateAngle = heading1 - state.rotation.heading0; // in degrees
+
+    var cIdx = this.coordinateIndex(state.selectedCoordPaths);
+    // TODO validate cIdx
+    var heading0 = state.rotation.headings[cIdx];
+    var rotateAngle = heading1 - heading0; // in degrees
     if (CommonSelectors.isShiftDown(e)) {
         rotateAngle = 5.0 * Math.round(rotateAngle / 5.0);
     }
