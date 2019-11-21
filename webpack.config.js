@@ -6,7 +6,8 @@ module.exports = {
     mode: 'development',
 
     entry: [
-        './src/index.js'
+        './src/index.js',
+        './src/demo.js'
     ],
     output: {
         // library: 'app',
