@@ -256,13 +256,26 @@ TxRectMode.computeAxes = function(polygon, state) {
         headings: headings, // rotation start heading for each point
     };
 
-    // compute current distances from center for scaling
-    var distances = polygon.geometry.coordinates[0].map((c) =>
-        turf.distance(center, turf.point(c), { units: 'meters'}) );
+    // compute current distances from centers for scaling
+    var n = corners.length-1;
+    var iHalf = Math.floor(n/2);
+
+    var distances = [];
+    var centers = [];
+    for (var i = 0; i < n; i++) {
+        var c1 = corners[i];
+        var i2 = (i + iHalf ) % n;
+        var c0 = corners[i2]; // opposite corner
+        centers[i] = c0;
+        distances[i] = turf.distance( turf.point(c0), turf.point(c1), { units: 'meters'});
+    }
+
+    // var distances = polygon.geometry.coordinates[0].map((c) =>
+    //     turf.distance(center, turf.point(c), { units: 'meters'}) );
 
     state.scaling = {
         feature0: polygon,  // initial feature state
-        center: center.geometry.coordinates,
+        centers: centers,
         distances: distances
     };
 };
@@ -334,11 +347,15 @@ TxRectMode.dragScalePoint = function(state, e, delta) {
 
     var polygon = state.feature.toGeoJSON();
 
-    var center = turf.point(state.scaling.center);
+    var cIdx = this.coordinateIndex(state.selectedCoordPaths);
+    // TODO validate cIdx
+
+    var cCenter = state.scaling.centers[cIdx];
+    var center = turf.point(cCenter);
     var m1 = turf.point([e.lngLat.lng, e.lngLat.lat]);
 
     var distance = turf.distance(center, m1, { units: 'meters'});
-    var scale = distance / state.scaling.distances[0]; // TODO fix index
+    var scale = distance / state.scaling.distances[cIdx];
 
     if (CommonSelectors.isShiftDown(e)) {
         // TODO discrete scaling
@@ -348,7 +365,7 @@ TxRectMode.dragScalePoint = function(state, e, delta) {
     var scaledFeature = turf.transformScale(state.scaling.feature0,
         scale,
         {
-            origin: state.scaling.center,
+            origin: cCenter,
             mutate: false,
         });
 
