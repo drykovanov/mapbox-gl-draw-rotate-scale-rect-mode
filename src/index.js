@@ -35,7 +35,7 @@ TxRectMode.toDisplayFeatures = function(state, geojson, push) {
         trash: false
     });
 
-    this.fireUpdate();
+    // this.fireUpdate();
 };
 
 TxRectMode.onSetup = function(opts) {
@@ -338,7 +338,7 @@ TxRectMode.dragRotatePoint = function(state, e, delta) {
 
     state.feature.incomingCoords(rotatedFeature.geometry.coordinates);
     // TODO add option for this:
-    // this.fireUpdate();
+    this.fireUpdate();
 };
 
 TxRectMode.dragScalePoint = function(state, e, delta) {
@@ -373,14 +373,14 @@ TxRectMode.dragScalePoint = function(state, e, delta) {
 
     state.feature.incomingCoords(scaledFeature.geometry.coordinates);
     // TODO add option for this:
-    // this.fireUpdate();
+    this.fireUpdate();
 };
 
 TxRectMode.dragFeature = function(state, e, delta) {
     moveFeatures(this.getSelected(), delta);
     state.dragMoveLocation = e.lngLat;
     // TODO add option for this:
-    // this.fireUpdate();
+    this.fireUpdate();
 };
 
 TxRectMode.fireUpdate = function() {

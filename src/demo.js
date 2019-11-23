@@ -368,9 +368,11 @@ function tx_rect_mode_demo_map_onload(event) {
     });
 
     // nyc_1911.jpg - 468x760
+    // var im_w = 421;
+    // var im_h = 671;
+    var im_w = 751;
+    var im_h = 345;
 
-    var im_w = 421;
-    var im_h = 671;
 
     const canvas = map.getCanvas();
     // Get the device pixel ratio, falling back to 1.
@@ -396,7 +398,8 @@ function tx_rect_mode_demo_map_onload(event) {
 
     map.addSource("test-overlay", {
         "type": "image",
-        "url": 'nyc_1911_crop.jpg',
+        // "url": 'nyc_1911_crop.jpg',
+        "url": '03_image_bin_masked.png',
         "coordinates": [cUL,cUR,cLR,cLL]
     });
 
@@ -411,28 +414,69 @@ function tx_rect_mode_demo_map_onload(event) {
     });
 
     map.addControl(draw, 'top-right');
-    map.on('draw.update', drawUpdateOverlay.bind({
+    // map.on('draw.update', drawUpdateOverlay.bind({
+    //     map: map
+    // }));
+
+    // map.on('draw.render', drawUpdateOverlayByFeature.bind({map: map, feature: polygon, draw: draw}));
+    // map.on('data', drawUpdateOverlayByFeature.bind({map: map, feature: polygon, draw: draw}));
+    map.on('data', onData.bind({
+        draw: draw,
         map: map
     }));
 
-
-    draw.add(polygon);
+        draw.add(polygon);
     // draw.changeMode('mode', opts);
     // tx_rect, direct_select
     draw.changeMode('tx_rect', {
         featureId: polygon.id
     });
-
-
-
 }
+
+function onData(e) {
+    if (e.sourceId && e.sourceId.startsWith('mapbox-gl-draw-')) {
+        // console.log(e);
+        if (e.type && e.type == 'data'
+            && e.source.data
+            // && e.sourceDataType && e.sourceDataType == 'content'
+            && e.sourceDataType == undefined
+            && e.isSourceLoaded
+        ) {
+            // var source = this.map.getSource(e.sourceId);
+            //var geojson = source._data;
+            var geojson = e.source.data;
+            if (geojson && geojson.features && geojson.features.length > 0) {
+                drawUpdateOverlayByFeature(geojson.features[0], this.map);
+            }
+        }
+
+
+        // drawUpdateOverlayByDraw(this.draw, this.map);
+        // if (e.type && e.type == 'data'
+        //     && e.isSourceLoaded) {
+        //
+        // }
+    }
+}
+
+function drawUpdateOverlayByFeature(feature, map) {
+    var coordinates = feature.geometry.coordinates[0].slice(0, 4);
+    map.getSource("test-overlay").setCoordinates(coordinates);
+}
+
+function drawUpdateOverlayByDraw(draw, map) {
+    var geojson = draw.getAll();
+    if (geojson && geojson.features && geojson.features.length > 0) {
+        var feature = geojson.features[0];
+        var coordinates = feature.geometry.coordinates[0].slice(0, 4);
+        map.getSource("test-overlay").setCoordinates(coordinates);
+    }
+}
+
 
 function drawUpdateOverlay(e) {
     var feature = e.features[0];
     var coordinates = feature.geometry.coordinates[0].slice(0, 4);
-
-//    console.log(coordinates);
-
     this.map.getSource("test-overlay").setCoordinates(coordinates);
 }
 
@@ -441,8 +485,9 @@ export function tx_rect_mode_demo() {
     var map = new mapboxgl.Map({
         container: 'map', // container id
         style: 'mapbox://styles/mapbox/streets-v11', // stylesheet location
-        center: [-73.93, 40.73], // starting position [lng, lat]
-        zoom: 10, // starting zoom
+        // center: [-73.93, 40.73], // starting position [lng, lat]
+        center: [30.387850, 59.994247],
+        zoom: 19, // starting zoom
         // fadeDuration: 0 //
     });
 
