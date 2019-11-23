@@ -414,6 +414,7 @@ function tx_rect_mode_demo_map_onload(event) {
     });
 
     map.addControl(draw, 'top-right');
+    // draw.update is out of sync with actual drawn polygon
     // map.on('draw.update', drawUpdateOverlay.bind({
     //     map: map
     // }));
@@ -425,8 +426,7 @@ function tx_rect_mode_demo_map_onload(event) {
         map: map
     }));
 
-        draw.add(polygon);
-    // draw.changeMode('mode', opts);
+    draw.add(polygon);
     // tx_rect, direct_select
     draw.changeMode('tx_rect', {
         featureId: polygon.id
@@ -449,35 +449,12 @@ function onData(e) {
                 drawUpdateOverlayByFeature(geojson.features[0], this.map);
             }
         }
-
-
-        // drawUpdateOverlayByDraw(this.draw, this.map);
-        // if (e.type && e.type == 'data'
-        //     && e.isSourceLoaded) {
-        //
-        // }
     }
 }
 
 function drawUpdateOverlayByFeature(feature, map) {
     var coordinates = feature.geometry.coordinates[0].slice(0, 4);
     map.getSource("test-overlay").setCoordinates(coordinates);
-}
-
-function drawUpdateOverlayByDraw(draw, map) {
-    var geojson = draw.getAll();
-    if (geojson && geojson.features && geojson.features.length > 0) {
-        var feature = geojson.features[0];
-        var coordinates = feature.geometry.coordinates[0].slice(0, 4);
-        map.getSource("test-overlay").setCoordinates(coordinates);
-    }
-}
-
-
-function drawUpdateOverlay(e) {
-    var feature = e.features[0];
-    var coordinates = feature.geometry.coordinates[0].slice(0, 4);
-    this.map.getSource("test-overlay").setCoordinates(coordinates);
 }
 
 export function tx_rect_mode_demo() {
