@@ -6,7 +6,14 @@ import createSupplementaryPoints from '@mapbox/mapbox-gl-draw/src/lib/create_sup
 import CommonSelectors from '@mapbox/mapbox-gl-draw/src/lib/common_selectors';
 import moveFeatures from '@mapbox/mapbox-gl-draw/src/lib/move_features';
 
-import * as turf from '@turf/turf';
+import {lineString, point} from '@turf/helpers';
+import bearing from '@turf/bearing';
+import centroid from '@turf/centroid';
+import midpoint from '@turf/midpoint';
+import distance from '@turf/distance';
+import destination from '@turf/destination';
+import transformRotate from '@turf/transform-rotate';
+import transformScale from '@turf/transform-scale';
 
 export const TxRectMode = {};
 
@@ -91,10 +98,10 @@ TxRectMode.computeBisectrix = function(points) {
         var i2 = (i1 + 1) % points.length;
         // console.log('' + i0 + ' -> ' + i1 + ' -> ' + i2);
 
-        var l1 = turf.lineString([points[i0].geometry.coordinates, points[i1].geometry.coordinates]);
-        var l2 = turf.lineString([points[i1].geometry.coordinates, points[i2].geometry.coordinates]);
-        var a1 = turf.bearing(points[i0].geometry.coordinates, points[i1].geometry.coordinates);
-        var a2 = turf.bearing(points[i2].geometry.coordinates, points[i1].geometry.coordinates);
+        var l1 = lineString([points[i0].geometry.coordinates, points[i1].geometry.coordinates]);
+        var l2 = lineString([points[i1].geometry.coordinates, points[i2].geometry.coordinates]);
+        var a1 = bearing(points[i0].geometry.coordinates, points[i1].geometry.coordinates);
+        var a2 = bearing(points[i2].geometry.coordinates, points[i1].geometry.coordinates);
         // console.log('a1 = '  +a1 + ', a2 = ' + a2);
 
         var a = (a1 + a2)/2.0;
@@ -124,13 +131,13 @@ TxRectMode.createRotationPoints = function(geojson, suppPoints) {
     var v1 = null;
     corners.forEach((v2) => {
         if (v1 != null) {
-            var center = turf.centroid(geojson);
-            var cR0 = turf.midpoint(v1, v2).geometry.coordinates;
+            var center = centroid(geojson);
+            var cR0 = midpoint(v1, v2).geometry.coordinates;
 
-            var heading = turf.bearing(center, cR0);
-            var distance0 = turf.distance(center, cR0);
+            var heading = bearing(center, cR0);
+            var distance0 = distance(center, cR0);
             var distance1 = 1.0 * distance0; // TODO paramter, TODO depends on map scale
-            var cR1 = turf.destination(center, distance0, heading, {}).geometry.coordinates;
+            var cR1 = destination(center, distance0, heading, {}).geometry.coordinates;
 
             rotationWidgets.push({
                     type: Constants.geojsonTypes.FEATURE,
@@ -238,15 +245,15 @@ TxRectMode.coordinateIndex = function(coordPaths) {
 
 TxRectMode.computeAxes = function(polygon, state) {
     // TODO check min 3 points
-    var center = turf.centroid(polygon);
+    var center = centroid(polygon);
     var corners = polygon.geometry.coordinates[0].slice(0);
 
     var c0 = corners[corners.length - 1];
     var headings = corners.map((c1) => {
-        var rotPoint = turf.midpoint(
-            turf.point(c0),
-            turf.point(c1));
-        var heading = turf.bearing(center, rotPoint);
+        var rotPoint = midpoint(
+            point(c0),
+            point(c1));
+        var heading = bearing(center, rotPoint);
         c0 = c1;
         return heading;
     });
@@ -269,7 +276,7 @@ TxRectMode.computeAxes = function(polygon, state) {
         var i2 = (i + iHalf ) % n;
         var c0 = corners[i2]; // opposite corner
         centers[i] = c0;
-        distances[i] = turf.distance( turf.point(c0), turf.point(c1), { units: 'meters'});
+        distances[i] = distance( point(c0), point(c1), { units: 'meters'});
     }
 
     // var distances = polygon.geometry.coordinates[0].map((c) =>
@@ -317,8 +324,8 @@ TxRectMode.dragRotatePoint = function(state, e, delta) {
     }
 
     var polygon = state.feature.toGeoJSON();
-    var m1 = turf.point([e.lngLat.lng, e.lngLat.lat]);
-    var heading1 = turf.bearing(turf.point(state.rotation.center), m1);
+    var m1 = point([e.lngLat.lng, e.lngLat.lat]);
+    var heading1 = bearing(point(state.rotation.center), m1);
 
 
     var cIdx = this.coordinateIndex(state.selectedCoordPaths);
@@ -329,7 +336,7 @@ TxRectMode.dragRotatePoint = function(state, e, delta) {
         rotateAngle = 5.0 * Math.round(rotateAngle / 5.0);
     }
 
-    var rotatedFeature = turf.transformRotate(state.rotation.feature0,
+    var rotatedFeature = transformRotate(state.rotation.feature0,
         rotateAngle,
         {
            pivot: state.rotation.center,
@@ -353,10 +360,10 @@ TxRectMode.dragScalePoint = function(state, e, delta) {
     // TODO validate cIdx
 
     var cCenter = state.scaling.centers[cIdx];
-    var center = turf.point(cCenter);
-    var m1 = turf.point([e.lngLat.lng, e.lngLat.lat]);
+    var center = point(cCenter);
+    var m1 = point([e.lngLat.lng, e.lngLat.lat]);
 
-    var distance = turf.distance(center, m1, { units: 'meters'});
+    var distance = distance(center, m1, { units: 'meters'});
     var scale = distance / state.scaling.distances[cIdx];
 
     if (CommonSelectors.isShiftDown(e)) {
@@ -364,7 +371,7 @@ TxRectMode.dragScalePoint = function(state, e, delta) {
         scale = 0.05 * Math.round(scale / 0.05);
     }
 
-    var scaledFeature = turf.transformScale(state.scaling.feature0,
+    var scaledFeature = transformScale(state.scaling.feature0,
         scale,
         {
             origin: cCenter,

@@ -20,7 +20,14 @@
   "homepage": "https://github.com/drykovanov/mapbox-gl-draw-rotate-scale-rect-mode#readme",
   "dependencies": {
     "@mapbox/mapbox-gl-draw": "^1.1.2",
-    "@turf/turf": "^5.1.6",
+    "@turf/bearing": "^6.0.1",
+    "@turf/centroid": "^6.0.2",
+    "@turf/destination": "^6.0.1",
+    "@turf/distance": "^6.0.1",
+    "@turf/helpers": "^6.1.4",
+    "@turf/midpoint": "^5.1.5",
+    "@turf/transform-rotate": "^5.1.5",
+    "@turf/transform-scale": "^5.1.5",
     "mapbox-gl": "^1.5.0"
   },
   "devDependencies": {

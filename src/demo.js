@@ -1,6 +1,6 @@
 // ----Demo----
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
-import * as turf from "@turf/turf";
+import polygon from "@turf/helpers";
 import {TxRectMode} from "./index";
 
 var drawStyle = [
@@ -393,7 +393,7 @@ function tx_rect_mode_demo_map_onload(event) {
     const cLR = map.unproject ([w/2 + im_w/2, h/2 + im_h/2]).toArray();
     const cLL = map.unproject ([w/2 - im_w/2, h/2 + im_h/2]).toArray();
     const coordinates = [cUL,cUR,cLR,cLL,cUL];
-    const polygon = turf.polygon([coordinates]);
+    const polygon = polygon([coordinates]);
     polygon.id = 1;
 
     map.addSource("test-overlay", {
@@ -435,7 +435,7 @@ function tx_rect_mode_demo_map_onload(event) {
 
 function onData(e) {
     if (e.sourceId && e.sourceId.startsWith('mapbox-gl-draw-')) {
-        // console.log(e);
+        console.log(e.sourceId);
         if (e.type && e.type == 'data'
             && e.source.data
             // && e.sourceDataType && e.sourceDataType == 'content'
