@@ -363,8 +363,8 @@ TxRectMode.dragScalePoint = function(state, e, delta) {
     var center = point(cCenter);
     var m1 = point([e.lngLat.lng, e.lngLat.lat]);
 
-    var distance = distance(center, m1, { units: 'meters'});
-    var scale = distance / state.scaling.distances[cIdx];
+    var dist = distance(center, m1, { units: 'meters'});
+    var scale = dist / state.scaling.distances[cIdx];
 
     if (CommonSelectors.isShiftDown(e)) {
         // TODO discrete scaling
