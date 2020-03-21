@@ -8,7 +8,8 @@ import moveFeatures from '@mapbox/mapbox-gl-draw/src/lib/move_features';
 
 import {lineString, point} from '@turf/helpers';
 import bearing from '@turf/bearing';
-import centroid from '@turf/centroid';
+// import centroid from '@turf/centroid';
+import center from '@turf/center';
 import midpoint from '@turf/midpoint';
 import distance from '@turf/distance';
 import destination from '@turf/destination';
@@ -131,13 +132,13 @@ TxRectMode.createRotationPoints = function(geojson, suppPoints) {
     var v1 = null;
     corners.forEach((v2) => {
         if (v1 != null) {
-            var center = centroid(geojson);
+            var center0 = center(geojson);
             var cR0 = midpoint(v1, v2).geometry.coordinates;
 
-            var heading = bearing(center, cR0);
-            var distance0 = distance(center, cR0);
+            var heading = bearing(center0, cR0);
+            var distance0 = distance(center0, cR0);
             var distance1 = 1.0 * distance0; // TODO paramter, TODO depends on map scale
-            var cR1 = destination(center, distance0, heading, {}).geometry.coordinates;
+            var cR1 = destination(center0, distance0, heading, {}).geometry.coordinates;
 
             rotationWidgets.push({
                     type: Constants.geojsonTypes.FEATURE,
@@ -245,7 +246,7 @@ TxRectMode.coordinateIndex = function(coordPaths) {
 
 TxRectMode.computeAxes = function(polygon, state) {
     // TODO check min 3 points
-    var center = centroid(polygon);
+    var center0 = center(polygon);
     var corners = polygon.geometry.coordinates[0].slice(0);
 
     var c0 = corners[corners.length - 1];
@@ -253,7 +254,7 @@ TxRectMode.computeAxes = function(polygon, state) {
         var rotPoint = midpoint(
             point(c0),
             point(c1));
-        var heading = bearing(center, rotPoint);
+        var heading = bearing(center0, rotPoint);
         c0 = c1;
         return heading;
     });
@@ -261,7 +262,7 @@ TxRectMode.computeAxes = function(polygon, state) {
 
     state.rotation = {
         feature0: polygon,  // initial feature state
-        center: center.geometry.coordinates,
+        center: center0.geometry.coordinates,
         headings: headings, // rotation start heading for each point
     };
 
