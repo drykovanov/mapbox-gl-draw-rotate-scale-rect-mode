@@ -236,9 +236,10 @@ TxRectMode.onTouchStart = TxRectMode.onMouseDown = function(state, e) {
     // if (isMidpoint(e)) return this.onMidpoint(state, e);
 };
 
-
-const TX_MODE_SCALE = "tx.scale";
-const TX_MODE_ROTATE = "tx.rotate";
+const TxMode = {
+    Scale: 1,
+    Rotate: 2,
+};
 
 TxRectMode.onVertex = function(state, e) {
     // console.log('onVertex()');
@@ -248,7 +249,7 @@ TxRectMode.onVertex = function(state, e) {
     this.startDragging(state, e);
     const about = e.featureTarget.properties;
     state.selectedCoordPaths = [about.coord_path];
-    state.txMode = TX_MODE_SCALE;
+    state.txMode = TxMode.Scale;
 };
 
 TxRectMode.onRotatePoint = function(state, e) {
@@ -259,7 +260,7 @@ TxRectMode.onRotatePoint = function(state, e) {
     this.startDragging(state, e);
     const about = e.featureTarget.properties;
     state.selectedCoordPaths = [about.coord_path];
-    state.txMode = TX_MODE_ROTATE;
+    state.txMode = TxMode.Rotate;
 };
 
 TxRectMode.onFeature = function(state, e) {
@@ -288,9 +289,7 @@ TxRectMode.computeAxes = function(state, polygon) {
 
     var c0 = corners[corners.length - 1];
     var headings = corners.map((c1) => {
-        var rotPoint = midpoint(
-            point(c0),
-            point(c1));
+        var rotPoint = midpoint(point(c0),point(c1));
         var heading = bearing(center0, rotPoint);
         c0 = c1;
         return heading;
@@ -341,10 +340,10 @@ TxRectMode.onDrag = function(state, e) {
     };
     if (state.selectedCoordPaths.length > 0 && state.txMode) {
         switch (state.txMode) {
-            case TX_MODE_ROTATE:
+            case TxMode.Rotate:
                 this.dragRotatePoint(state, e, delta);
                 break;
-            case TX_MODE_SCALE:
+            case TxMode.Scale:
                 this.dragScalePoint(state, e, delta);
                 break;
         }
