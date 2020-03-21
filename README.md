@@ -28,7 +28,6 @@ There is an example of styling in [demo.js](/src/demo.js) and icon set for [scal
     const draw = new MapboxDraw({
         displayControlsDefault: false,
         controls: {
-            trash: true
         },
 
         modes: Object.assign({
