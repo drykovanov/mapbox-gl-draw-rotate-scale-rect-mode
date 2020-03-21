@@ -18,34 +18,6 @@ import transformScale from '@turf/transform-scale';
 
 export const TxRectMode = {};
 
-TxRectMode.toDisplayFeatures = function(state, geojson, push) {
-    if (state.featureId === geojson.properties.id) {
-        geojson.properties.active = Constants.activeStates.ACTIVE;
-        push(geojson);
-        var suppPoints = createSupplementaryPoints(geojson, {
-            map: this.map,
-            midpoints: false,
-            selectedPaths: state.selectedCoordPaths
-        });
-        this.computeBisectrix(suppPoints);
-        var rotPoints = this.createRotationPoints(geojson, suppPoints);
-        suppPoints.forEach(push);
-        rotPoints.forEach(push);
-    } else {
-        geojson.properties.active = Constants.activeStates.INACTIVE;
-        push(geojson);
-    }
-
-    // this.fireActionable(state);
-    this.setActionableState({
-        combineFeatures: false,
-        uncombineFeatures: false,
-        trash: false
-    });
-
-    // this.fireUpdate();
-};
-
 TxRectMode.onSetup = function(opts) {
     const featureId = opts.featureId;
     const feature = this.getFeature(featureId);
@@ -81,6 +53,34 @@ TxRectMode.onSetup = function(opts) {
     });
 
     return state;
+};
+
+TxRectMode.toDisplayFeatures = function(state, geojson, push) {
+    if (state.featureId === geojson.properties.id) {
+        geojson.properties.active = Constants.activeStates.ACTIVE;
+        push(geojson);
+        var suppPoints = createSupplementaryPoints(geojson, {
+            map: this.map,
+            midpoints: false,
+            selectedPaths: state.selectedCoordPaths
+        });
+        this.computeBisectrix(suppPoints);
+        var rotPoints = this.createRotationPoints(geojson, suppPoints);
+        suppPoints.forEach(push);
+        rotPoints.forEach(push);
+    } else {
+        geojson.properties.active = Constants.activeStates.INACTIVE;
+        push(geojson);
+    }
+
+    // this.fireActionable(state);
+    this.setActionableState({
+        combineFeatures: false,
+        uncombineFeatures: false,
+        trash: false
+    });
+
+    // this.fireUpdate();
 };
 
 TxRectMode.onStop = function() {
