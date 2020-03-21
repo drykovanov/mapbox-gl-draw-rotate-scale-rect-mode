@@ -358,7 +358,12 @@ function tx_rect_mode_demo_map_onload(event) {
     });
 
     var draw = new MapboxDraw({
-        displayControlsDefault: true,
+        displayControlsDefault: false,
+        controls: {
+            // polygon: true,
+            // trash: true
+        },
+
         // styles: drawStyles,
         modes: Object.assign({
             tx_rect: TxRectMode,
@@ -429,10 +434,10 @@ function tx_rect_mode_demo_map_onload(event) {
     draw.add(poly);
     // tx_rect, direct_select
     draw.changeMode('tx_rect', {
-        featureId: poly.id,
+        featureId: poly.id, // required
 
-        // rotatePivot: TxCenter.Center,
-        scaleCenter: TxCenter.Opposite,
+        rotatePivot: TxCenter.Center,   // rotate around center
+        scaleCenter: TxCenter.Opposite, // scale around opposite vertex
     });
 }
 
