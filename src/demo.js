@@ -357,14 +357,12 @@ function tx_rect_mode_demo_map_onload(event) {
         map.addImage('scale', image);
     });
 
-    var draw = new MapboxDraw({
+    const draw = new MapboxDraw({
         displayControlsDefault: false,
         controls: {
-            // polygon: true,
-            // trash: true
+            trash: true
         },
 
-        // styles: drawStyles,
         modes: Object.assign({
             tx_rect: TxRectMode,
         }, MapboxDraw.modes),
@@ -373,10 +371,10 @@ function tx_rect_mode_demo_map_onload(event) {
     });
 
     // nyc_1911.jpg - 468x760
-    // var im_w = 421;
-    // var im_h = 671;
-    var im_w = 751;
-    var im_h = 345;
+    var im_w = 421;
+    var im_h = 671;
+    // var im_w = 751;
+    // var im_h = 345;
 
 
     const canvas = map.getCanvas();
@@ -403,8 +401,8 @@ function tx_rect_mode_demo_map_onload(event) {
 
     map.addSource("test-overlay", {
         "type": "image",
-        // "url": 'nyc_1911_crop.jpg',
-        "url": '03_image_bin_masked.png',
+        "url": 'nyc_1911_crop.jpg',
+        // "url": '03_image_bin_masked.png',
         "coordinates": [cUL,cUR,cLR,cLL]
     });
 
@@ -417,29 +415,33 @@ function tx_rect_mode_demo_map_onload(event) {
             "raster-fade-duration": 0
         },
     });
-
     map.addControl(draw, 'top-right');
-    // draw.update is out of sync with actual drawn polygon
-    // map.on('draw.update', drawUpdateOverlay.bind({
-    //     map: map
-    // }));
 
-    // map.on('draw.render', drawUpdateOverlayByFeature.bind({map: map, feature: polygon, draw: draw}));
-    // map.on('data', drawUpdateOverlayByFeature.bind({map: map, feature: polygon, draw: draw}));
     map.on('data', onData.bind({
         draw: draw,
         map: map
     }));
 
     draw.add(poly);
-    // tx_rect, direct_select
+
     draw.changeMode('tx_rect', {
         featureId: poly.id, // required
 
         // rotatePivot: TxCenter.Opposite,   // rotate around center
-        scaleCenter: TxCenter.Opposite, // scale around opposite vertex
+        // scaleCenter: TxCenter.Opposite, // scale around opposite vertex
     });
 }
+
+
+// draw.update is out of sync with actual drawn polygon
+// map.on('draw.update', drawUpdateOverlay.bind({
+//     map: map
+// }));
+
+// map.on('draw.render', drawUpdateOverlayByFeature.bind({map: map, feature: polygon, draw: draw}));
+// map.on('data', drawUpdateOverlayByFeature.bind({map: map, feature: polygon, draw: draw}));
+
+
 
 function onData(e) {
     if (e.sourceId && e.sourceId.startsWith('mapbox-gl-draw-')) {
@@ -470,9 +472,10 @@ export function tx_rect_mode_demo() {
     var map = new mapboxgl.Map({
         container: 'map', // container id
         style: 'mapbox://styles/mapbox/streets-v11', // stylesheet location
-        // center: [-73.93, 40.73], // starting position [lng, lat]
-        center: [30.387850, 59.994247],
-        zoom: 19, // starting zoom
+        center: [-73.93, 40.73], // starting position [lng, lat]
+        zoom: 9, // starting zoom
+        // center: [30.387850, 59.994247],
+        // zoom: 19, // starting zoom
         // fadeDuration: 0 //
     });
 
