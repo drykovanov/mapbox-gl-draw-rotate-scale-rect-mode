@@ -2,6 +2,8 @@
 
 This is the custom [mapbox-gl-draw mode](https://github.com/mapbox/mapbox-gl-draw/blob/master/docs/MODES.md) which allows to rotate and scale rectangle polygons.
 
+Live demo is [here](https://drykovanov.github.io/TxRectMode/demo/demo.html)
+
 ![Demo gif](/docs/tx_demo1.gif)
 
 ## Features:
