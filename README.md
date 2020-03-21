@@ -31,7 +31,7 @@ npm install git+https://github.com/drykovanov/mapbox-gl-draw-rotate-scale-rect-m
     });
     ...
     const coordinates = [cUL,cUR,cLR,cLL,cUL];
-    const poly = polygon([coordinates]);
+    const poly = turf.polygon([coordinates]);
     poly.id = <unique id>;
     
     draw.add(poly);
