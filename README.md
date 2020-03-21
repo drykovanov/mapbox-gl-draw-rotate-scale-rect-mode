@@ -18,10 +18,10 @@ npm install git+https://github.com/drykovanov/mapbox-gl-draw-rotate-scale-rect-m
 ## Usage examples:
 First, init [MapboxDraw](https://github.com/mapbox/mapbox-gl-draw/blob/master/docs/API.md) with _TxRectMode_ and styling provided.
 
-There is style example in [demo.js](/src/demo.js) and icon set for [scaling](/demo/scale/) and [rotation](/demo/rotate/).
+There is an example of styling in [demo.js](/src/demo.js) and icon set for [scaling](/demo/scale/) and [rotation](/demo/rotate/).
 
 ```
-    import { TxRectMode, TxCenter} from 'mapbox-gl-draw-rotate-scale-rect-mode';
+    import { TxRectMode, TxCenter } from 'mapbox-gl-draw-rotate-scale-rect-mode';
     ...
     const draw = new MapboxDraw({
         displayControlsDefault: false,
@@ -38,7 +38,7 @@ There is style example in [demo.js](/src/demo.js) and icon set for [scaling](/de
 ```
 
 
-Second: create your rectangle polygon (with [turf](https://turfjs.org/docs/#polygon)) and provide it's id to changeMode():
+Second, create your rectangle polygon (with [turf](https://turfjs.org/docs/#polygon)) and provide it's _featureId_ to `changeMode()`:
 ```
 
     const coordinates = [cUL,cUR,cLR,cLL,cUL];
