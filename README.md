@@ -16,7 +16,8 @@ npm install git+https://github.com/drykovanov/mapbox-gl-draw-rotate-scale-rect-m
 ```
 
 ## Usage examples:
-Init mapbox-gl-draw with TxRectMode and changeMode(): 
+Init mapbox-gl-draw with TxRectMode and provide styling.
+There is style example in /src/demo.js and icon set in /demo/rotate, /demo/scale.
 ```
     import { TxRectMode, TxCenter} from 'mapbox-gl-draw-rotate-scale-rect-mode';
     ...
