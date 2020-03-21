@@ -436,7 +436,7 @@ function tx_rect_mode_demo_map_onload(event) {
     draw.changeMode('tx_rect', {
         featureId: poly.id, // required
 
-        rotatePivot: TxCenter.Center,   // rotate around center
+        // rotatePivot: TxCenter.Opposite,   // rotate around center
         scaleCenter: TxCenter.Opposite, // scale around opposite vertex
     });
 }

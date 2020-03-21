@@ -284,30 +284,61 @@ TxRectMode.computeRotationCenter = function(state, polygon) {
 
 TxRectMode.computeAxes = function(state, polygon) {
     // TODO check min 3 points
-    var center0 = this.computeRotationCenter(state, polygon);
-    var corners = polygon.geometry.coordinates[0].slice(0);
+    const center0 = this.computeRotationCenter(state, polygon);
+    const corners = polygon.geometry.coordinates[0].slice(0);
 
-    var c0 = corners[corners.length - 1];
-    var headings = corners.map((c1) => {
-        var rotPoint = midpoint(point(c0),point(c1));
-        var heading = bearing(center0, rotPoint);
-        c0 = c1;
-        return heading;
-    });
-    headings = headings.slice(1);
+    const n = corners.length-1;
+    const iHalf = Math.floor(n/2);
+
+    // var c0 = corners[corners.length - 1];
+    // var headings = corners.map((c1) => {
+    //     var rotPoint = midpoint(point(c0),point(c1));
+    //     var heading = bearing(center0, rotPoint);
+    //     c0 = c1;
+    //     return heading;
+    // });
+    // headings = headings.slice(1);
+
+    var rotateCenters = [];
+    var headings = [];
+
+    for (var i1 = 0; i1 < n; i1++) {
+        var i0 = i1 - 1;
+        if (i0 < 0)
+            i0 += n;
+
+        const c0 = corners[i0];
+        const c1 = corners[i1];
+        const rotPoint = midpoint(point(c0),point(c1));
+
+        var rotCenter = center0;
+        if (TxCenter.Opposite === state.rotatePivot) {
+            var i3 = (i1 + iHalf) % n; // opposite corner
+            var i2 = i3 - 1;
+            if (i2 < 0)
+                i2 += n;
+
+            const c2 = corners[i2];
+            const c3 = corners[i3];
+            rotCenter = midpoint(point(c2),point(c3));
+        }
+
+        rotateCenters[i1] = rotCenter.geometry.coordinates;
+        headings[i1] = bearing(rotCenter, rotPoint);
+    }
 
     state.rotation = {
         feature0: polygon,  // initial feature state
-        center: center0.geometry.coordinates,
+        centers: rotateCenters,
         headings: headings, // rotation start heading for each point
     };
 
     // compute current distances from centers for scaling
-    var n = corners.length-1;
-    var iHalf = Math.floor(n/2);
 
+
+
+    var scaleCenters = [];
     var distances = [];
-    var centers = [];
     for (var i = 0; i < n; i++) {
         var c1 = corners[i];
         var c0 = center0.geometry.coordinates;
@@ -315,7 +346,7 @@ TxRectMode.computeAxes = function(state, polygon) {
             var i2 = (i + iHalf) % n; // opposite corner
             c0 = corners[i2];
         }
-        centers[i] = c0;
+        scaleCenters[i] = c0;
         distances[i] = distance( point(c0), point(c1), { units: 'meters'});
     }
 
@@ -324,7 +355,7 @@ TxRectMode.computeAxes = function(state, polygon) {
 
     state.scaling = {
         feature0: polygon,  // initial feature state
-        centers: centers,
+        centers: scaleCenters,
         distances: distances
     };
 };
@@ -365,11 +396,16 @@ TxRectMode.dragRotatePoint = function(state, e, delta) {
 
     var polygon = state.feature.toGeoJSON();
     var m1 = point([e.lngLat.lng, e.lngLat.lat]);
-    var heading1 = bearing(point(state.rotation.center), m1);
 
 
-    var cIdx = this.coordinateIndex(state.selectedCoordPaths);
+    const n = state.rotation.centers.length;
+    var cIdx = (this.coordinateIndex(state.selectedCoordPaths) + 1) % n;
     // TODO validate cIdx
+    var cCenter = state.rotation.centers[cIdx];
+    var center = point(cCenter);
+
+    var heading1 = bearing(center, m1);
+
     var heading0 = state.rotation.headings[cIdx];
     var rotateAngle = heading1 - heading0; // in degrees
     if (CommonSelectors.isShiftDown(e)) {
@@ -379,7 +415,7 @@ TxRectMode.dragRotatePoint = function(state, e, delta) {
     var rotatedFeature = transformRotate(state.rotation.feature0,
         rotateAngle,
         {
-           pivot: state.rotation.center,
+           pivot: center,
             mutate: false,
         });
 
