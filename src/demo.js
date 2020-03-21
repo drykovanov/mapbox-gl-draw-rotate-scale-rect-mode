@@ -435,7 +435,7 @@ function tx_rect_mode_demo_map_onload(event) {
 
 function onData(e) {
     if (e.sourceId && e.sourceId.startsWith('mapbox-gl-draw-')) {
-        console.log(e.sourceId);
+        // console.log(e.sourceId);
         if (e.type && e.type == 'data'
             && e.source.data
             // && e.sourceDataType && e.sourceDataType == 'content'
