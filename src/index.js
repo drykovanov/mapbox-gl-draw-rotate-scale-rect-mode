@@ -18,6 +18,34 @@ import transformScale from '@turf/transform-scale';
 
 export const TxRectMode = {};
 
+export const TxCenter = {
+    Center: 0,  // rotate or scale around center of polygon
+    Opposite: 1,  // rotate or scale around opposite side of polygon
+};
+
+function parseTxCenter(value, defaultTxCenter = TxCenter.Center) {
+    if (value == undefined || value == null)
+        return defaultTxCenter;
+
+    if (value === TxCenter.Center || value === TxCenter.Opposite)
+        return value;
+
+    if (value == 'center')
+        return TxCenter.Center;
+
+    if (value == 'opposite')
+        return TxCenter.Opposite;
+
+    throw Error('Invalid TxCenter: ' + value);
+}
+
+/*
+    opts = {
+        featureId: ...,
+        rotatePivot: default 'center' or 'opposite',
+        scaleCenter: default 'center' or 'opposite',
+    }
+ */
 TxRectMode.onSetup = function(opts) {
     const featureId = opts.featureId;
     const feature = this.getFeature(featureId);
@@ -38,6 +66,10 @@ TxRectMode.onSetup = function(opts) {
     const state = {
         featureId,
         feature,
+
+        rotatePivot: parseTxCenter(opts.rotatePivot, TxCenter.Center),
+        scaleCenter: parseTxCenter(opts.scaleCenter, TxCenter.Center),
+
         dragMoveLocation: opts.startPos || null,
         dragMoving: false,
         canDragMove: false,
@@ -65,7 +97,7 @@ TxRectMode.toDisplayFeatures = function(state, geojson, push) {
             selectedPaths: state.selectedCoordPaths
         });
         this.computeBisectrix(suppPoints);
-        var rotPoints = this.createRotationPoints(geojson, suppPoints);
+        var rotPoints = this.createRotationPoints(state, geojson, suppPoints);
         suppPoints.forEach(push);
         rotPoints.forEach(push);
     } else {
@@ -117,7 +149,7 @@ TxRectMode.computeBisectrix = function(points) {
 
 };
 
-TxRectMode.createRotationPoints = function(geojson, suppPoints) {
+TxRectMode.createRotationPoints = function(state, geojson, suppPoints) {
     const { type, coordinates } = geojson.geometry;
     const featureId = geojson.properties && geojson.properties.id;
 
@@ -131,7 +163,7 @@ TxRectMode.createRotationPoints = function(geojson, suppPoints) {
 
     var v1 = null;
 
-    var center0 = this.computeRotationCenter(geojson);
+    var center0 = this.computeRotationCenter(state, geojson);
     corners.forEach((v2) => {
         if (v1 != null) {
             var cR0 = midpoint(v1, v2).geometry.coordinates;
@@ -211,7 +243,7 @@ const TX_MODE_ROTATE = "tx.rotate";
 TxRectMode.onVertex = function(state, e) {
     // console.log('onVertex()');
     // convert internal MapboxDraw feature to valid GeoJSON:
-    this.computeAxes(state.feature.toGeoJSON(), state);
+    this.computeAxes(state, state.feature.toGeoJSON());
 
     this.startDragging(state, e);
     const about = e.featureTarget.properties;
@@ -222,7 +254,7 @@ TxRectMode.onVertex = function(state, e) {
 TxRectMode.onRotatePoint = function(state, e) {
     // console.log('onRotatePoint()');
     // convert internal MapboxDraw feature to valid GeoJSON:
-    this.computeAxes(state.feature.toGeoJSON(), state);
+    this.computeAxes(state, state.feature.toGeoJSON());
 
     this.startDragging(state, e);
     const about = e.featureTarget.properties;
@@ -244,14 +276,14 @@ TxRectMode.coordinateIndex = function(coordPaths) {
     }
 };
 
-TxRectMode.computeRotationCenter = function(polygon) {
+TxRectMode.computeRotationCenter = function(state, polygon) {
     var center0 = center(polygon);
     return center0;
 };
 
-TxRectMode.computeAxes = function(polygon, state) {
+TxRectMode.computeAxes = function(state, polygon) {
     // TODO check min 3 points
-    var center0 = this.computeRotationCenter(polygon);
+    var center0 = this.computeRotationCenter(state, polygon);
     var corners = polygon.geometry.coordinates[0].slice(0);
 
     var c0 = corners[corners.length - 1];
@@ -279,8 +311,11 @@ TxRectMode.computeAxes = function(polygon, state) {
     var centers = [];
     for (var i = 0; i < n; i++) {
         var c1 = corners[i];
-        var i2 = (i + iHalf ) % n;
-        var c0 = corners[i2]; // opposite corner
+        var c0 = center0.geometry.coordinates;
+        if (TxCenter.Opposite === state.scaleCenter) {
+            var i2 = (i + iHalf) % n; // opposite corner
+            c0 = corners[i2];
+        }
         centers[i] = c0;
         distances[i] = distance( point(c0), point(c1), { units: 'meters'});
     }

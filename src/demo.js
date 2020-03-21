@@ -1,7 +1,7 @@
 // ----Demo----
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import { polygon } from "@turf/helpers";
-import {TxRectMode} from "./index";
+import {TxRectMode, TxCenter } from "./index";
 
 var drawStyle = [
     {
@@ -429,7 +429,10 @@ function tx_rect_mode_demo_map_onload(event) {
     draw.add(poly);
     // tx_rect, direct_select
     draw.changeMode('tx_rect', {
-        featureId: poly.id
+        featureId: poly.id,
+
+        // rotatePivot: TxCenter.Center,
+        scaleCenter: TxCenter.Opposite,
     });
 }
 
