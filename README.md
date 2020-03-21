@@ -38,7 +38,7 @@ There is style example in [demo.js](/src/demo.js) and icon set for [scaling](/de
 ```
 
 
-Create rectangle polygon with turf and changeMode():
+Second: create your rectangle polygon (with [turf](https://turfjs.org/docs/#polygon)) and provide it's id to changeMode():
 ```
 
     const coordinates = [cUL,cUR,cLR,cLL,cUL];
