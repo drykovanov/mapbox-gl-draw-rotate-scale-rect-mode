@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/drykovanov/mapbox-gl-draw-rotate-scale-rect-mode#readme",
   "dependencies": {
+    "mapbox-gl": "^1.5.0",
     "@mapbox/mapbox-gl-draw": "^1.1.2",
     "@turf/bearing": "^6.0.1",
     "@turf/center": "^6.0.1",
@@ -28,8 +29,7 @@
     "@turf/helpers": "^6.1.4",
     "@turf/midpoint": "^5.1.5",
     "@turf/transform-rotate": "^5.1.5",
-    "@turf/transform-scale": "^5.1.5",
-    "mapbox-gl": "^1.5.0"
+    "@turf/transform-scale": "^5.1.5"
   },
   "devDependencies": {
     "@babel/core": "^7.9.0",
