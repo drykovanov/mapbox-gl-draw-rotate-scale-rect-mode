@@ -21,6 +21,7 @@
   "dependencies": {
     "@mapbox/mapbox-gl-draw": "^1.1.2",
     "@turf/bearing": "^6.0.1",
+    "@turf/center": "^6.0.1",
     "@turf/centroid": "^6.0.2",
     "@turf/destination": "^6.0.1",
     "@turf/distance": "^6.0.1",
