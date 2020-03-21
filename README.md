@@ -4,7 +4,7 @@ This is the custom [mapbox-gl-draw mode](https://github.com/mapbox/mapbox-gl-dra
 
 ![Demo gif](/docs/tx_demo1.gif)
 
-Features:
+##Features:
 * rotate/scale polygons
 * options to choose rotation pivot and scale center
 * discrete rotation whith <kbd>SHIFT</kbd> button pressed 
