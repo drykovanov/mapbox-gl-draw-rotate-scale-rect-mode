@@ -130,11 +130,11 @@ TxRectMode.createRotationPoints = function(geojson, suppPoints) {
     corners[corners.length] = corners[0];
 
     var v1 = null;
+
+    var center0 = this.computeRotationCenter(geojson);
     corners.forEach((v2) => {
         if (v1 != null) {
-            var center0 = center(geojson);
             var cR0 = midpoint(v1, v2).geometry.coordinates;
-
             var heading = bearing(center0, cR0);
             var distance0 = distance(center0, cR0);
             var distance1 = 1.0 * distance0; // TODO paramter, TODO depends on map scale
@@ -244,9 +244,14 @@ TxRectMode.coordinateIndex = function(coordPaths) {
     }
 };
 
+TxRectMode.computeRotationCenter = function(polygon) {
+    var center0 = center(polygon);
+    return center0;
+};
+
 TxRectMode.computeAxes = function(polygon, state) {
     // TODO check min 3 points
-    var center0 = center(polygon);
+    var center0 = this.computeRotationCenter(polygon);
     var corners = polygon.geometry.coordinates[0].slice(0);
 
     var c0 = corners[corners.length - 1];
