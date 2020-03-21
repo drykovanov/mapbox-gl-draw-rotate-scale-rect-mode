@@ -65,5 +65,6 @@ Second, create your rectangle polygon (with [turf](https://turfjs.org/docs/#poly
         scaleCenter: TxCenter.Opposite, // scale around opposite vertex
     });
 ```
-See how it works:
+See how scaling and rotation around opposite side works:
+
 ![Demo gif](/docs/tx_center.gif)
