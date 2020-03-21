@@ -12,5 +12,5 @@ This is the custom [mapbox-gl-draw mode](https://github.com/mapbox/mapbox-gl-dra
 
 ## Installation:
 ```
-npm install ...
+npm install git+https://github.com/drykovanov/mapbox-gl-draw-rotate-scale-rect-mode#0.1.7
 ```
