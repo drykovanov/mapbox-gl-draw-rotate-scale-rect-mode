@@ -9,3 +9,8 @@ This is the custom [mapbox-gl-draw mode](https://github.com/mapbox/mapbox-gl-dra
 * options to choose rotation pivot and scale center
 * discrete rotation whith <kbd>SHIFT</kbd> button pressed 
 * demo how to transform image 
+
+## Installation:
+```
+npm install ...
+```
