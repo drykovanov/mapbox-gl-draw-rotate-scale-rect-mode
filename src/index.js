@@ -53,16 +53,16 @@ TxRectMode.onSetup = function(opts) {
     const feature = this.getFeature(featureId);
 
     if (!feature) {
-        throw new Error('You must provide a featureId to enter direct_select mode');
+        throw new Error('You must provide a featureId to enter tx_poly mode');
     }
 
     if (feature.type != Constants.geojsonTypes.POLYGON) {
-        throw new TypeError('tx_rect mode can only handle polygons');
+        throw new TypeError('tx_poly mode can only handle polygons');
     }
     if (feature.coordinates === undefined
         || feature.coordinates.length != 1
         || feature.coordinates[0].length <= 2) {
-        throw new TypeError('tx_rect mode can only handle polygons');
+        throw new TypeError('tx_poly mode can only handle polygons');
     }
 
     const state = {

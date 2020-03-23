@@ -12,6 +12,7 @@ import {TxRectMode, TxCenter } from "./index";
 // };
 export function TxRectModeDemo(demoParams) {
     this._demoParams = demoParams;
+    this._nextFeatureId = 1;
 }
 
 TxRectModeDemo.prototype.start = function() {
@@ -28,17 +29,15 @@ TxRectModeDemo.prototype.start = function() {
 };
 
 TxRectModeDemo.prototype._onMapLoad = function(event) {
-    var map = event.target;
-
-    map.loadImage('rotate/01.png', function(error, image) {
+    this._map.loadImage('rotate/01.png', function(error, image) {
         if (error) throw error;
-        map.addImage('rotate', image);
-    });
+        this._map.addImage('rotate', image);
+    }.bind(this));
 
-    map.loadImage('scale/01.png', function(error, image) {
+    this._map.loadImage('scale/01.png', function(error, image) {
         if (error) throw error;
-        map.addImage('scale', image);
-    });
+        this._map.addImage('scale', image);
+    }.bind(this));
 
     this._draw = new MapboxDraw({
         displayControlsDefault: false,
@@ -50,19 +49,74 @@ TxRectModeDemo.prototype._onMapLoad = function(event) {
         userProperties: true,   // pass user properties to mapbox-gl-draw internal features
 
         modes: Object.assign({
-            tx_rect: TxRectMode,
+            tx_poly: TxRectMode,
         }, MapboxDraw.modes),
 
         styles: drawStyle,
     });
 
+    // XXX how to make overlay render under mapbox-gl-draw widgets?
+    this._createDemoOverlay();
+
+    this._map.addControl(this._draw, 'top-right');
+
+    this._createDemoFeatures();
+
+    this._map.on('data', this._onData.bind(this));
+
+    this._draw.changeMode('tx_poly', {
+        featureId: 1, // required
+
+        rotatePivot: TxCenter.Center,   // rotate around center
+        scaleCenter: TxCenter.Opposite, // scale around opposite vertex
+    });
+
+    this._map.on('draw.selectionchange', this._onDrawSelection.bind(this));
+};
+
+
+TxRectModeDemo.prototype._computeRect = function(center, size) {
+
+    const cUL = this._map.unproject ([center[0] - size[0]/2, center[1] - size[1]/2]).toArray();
+    const cUR = this._map.unproject ([center[0] + size[0]/2, center[1] - size[1]/2]).toArray();
+    const cLR = this._map.unproject ([center[0] + size[0]/2, center[1] + size[1]/2]).toArray();
+    const cLL = this._map.unproject ([center[0] - size[0]/2, center[1] + size[1]/2]).toArray();
+
+    return [cUL,cUR,cLR,cLL,cUL];
+};
+
+TxRectModeDemo.prototype._createDemoFeatures = function() {
+    if (this._overlayPoly)
+        this._draw.add(this._overlayPoly);
+
+
+    const canvas = this._map.getCanvas();
+    // Get the device pixel ratio, falling back to 1.
+    // var dpr = window.devicePixelRatio || 1;
+    // Get the size of the canvas in CSS pixels.
+    var rect = canvas.getBoundingClientRect();
+    const w = rect.width;
+    const h = rect.height;
+
+    const cPoly = this._computeRect([1 * w/5, h/3], [100, 180]);
+    const poly = polygon([cPoly]);
+    poly.id = this._nextFeatureId++;
+    this._draw.add(poly);
+
+
+
+};
+
+
+
+TxRectModeDemo.prototype._createDemoOverlay = function() {
     var im_w = this._demoParams.imageWidth;
     var im_h = this._demoParams.imageHeight;
 
 
-    const canvas = map.getCanvas();
+    const canvas = this._map.getCanvas();
     // Get the device pixel ratio, falling back to 1.
-    var dpr = window.devicePixelRatio || 1;
+    // var dpr = window.devicePixelRatio || 1;
     // Get the size of the canvas in CSS pixels.
     var rect = canvas.getBoundingClientRect();
     const w = rect.width;
@@ -74,20 +128,16 @@ TxRectModeDemo.prototype._onMapLoad = function(event) {
         im_h = Math.round(0.8 * im_h);
     }
 
-    const cUL = map.unproject ([w/2 - im_w/2, h/2 - im_h/2]).toArray();
-    const cUR = map.unproject ([w/2 + im_w/2, h/2 - im_h/2]).toArray();
-    const cLR = map.unproject ([w/2 + im_w/2, h/2 + im_h/2]).toArray();
-    const cLL = map.unproject ([w/2 - im_w/2, h/2 + im_h/2]).toArray();
-    const coordinates = [cUL,cUR,cLR,cLL,cUL];
+    const cPoly = this._computeRect([w/2, h/2], [im_w, im_h]);
+    const cBox = cPoly.slice(0, 4);
 
-
-    map.addSource("test-overlay", {
+    this._map.addSource("test-overlay", {
         "type": "image",
         "url": this._demoParams.imageUrl,
-        "coordinates": [cUL,cUR,cLR,cLL]
+        "coordinates": cBox
     });
 
-    map.addLayer({
+    this._map.addLayer({
         "id": "test-overlay-layer",
         "type": "raster",
         "source": "test-overlay",
@@ -96,24 +146,12 @@ TxRectModeDemo.prototype._onMapLoad = function(event) {
             "raster-fade-duration": 0
         },
     });
-    map.addControl(this._draw, 'top-right');
 
-    map.on('data', this._onData.bind(this));
-
-    const poly = polygon([coordinates]);
-    poly.id = 1;
+    const poly = polygon([cPoly]);
+    poly.id = this._nextFeatureId++;
     poly.properties.overlaySourceId = 'test-overlay';
     poly.properties.type = 'overlay';
-    this._draw.add(poly);
-
-    this._draw.changeMode('tx_rect', {
-        featureId: poly.id, // required
-
-        rotatePivot: TxCenter.Center,   // rotate around center
-        scaleCenter: TxCenter.Opposite, // scale around opposite vertex
-    });
-
-    this._map.on('draw.selectionchange', this._onDrawSelection.bind(this));
+    this._overlayPoly = poly;
 };
 
 TxRectModeDemo.prototype._onDrawSelection = function(e) {
@@ -124,7 +162,7 @@ TxRectModeDemo.prototype._onDrawSelection = function(e) {
 
     var feature = features[0];
     if (feature.geometry.type == 'Polygon' && feature.id) {
-        this._draw.changeMode('tx_rect', {
+        this._draw.changeMode('tx_poly', {
             featureId: feature.id, // required
 
             rotatePivot: TxCenter.Center,   // rotate around center
