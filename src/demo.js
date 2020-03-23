@@ -40,11 +40,14 @@ TxRectModeDemo.prototype._onMapLoad = function(event) {
         map.addImage('scale', image);
     });
 
-    const draw = new MapboxDraw({
+    this._draw = new MapboxDraw({
         displayControlsDefault: false,
         controls: {
+            polygon: true,
             // trash: true
         },
+
+        userProperties: true,   // pass user properties to mapbox-gl-draw internal features
 
         modes: Object.assign({
             tx_rect: TxRectMode,
@@ -76,8 +79,7 @@ TxRectModeDemo.prototype._onMapLoad = function(event) {
     const cLR = map.unproject ([w/2 + im_w/2, h/2 + im_h/2]).toArray();
     const cLL = map.unproject ([w/2 - im_w/2, h/2 + im_h/2]).toArray();
     const coordinates = [cUL,cUR,cLR,cLL,cUL];
-    const poly = polygon([coordinates]);
-    poly.id = 1;
+
 
     map.addSource("test-overlay", {
         "type": "image",
@@ -94,18 +96,43 @@ TxRectModeDemo.prototype._onMapLoad = function(event) {
             "raster-fade-duration": 0
         },
     });
-    map.addControl(draw, 'top-right');
+    map.addControl(this._draw, 'top-right');
 
     map.on('data', this._onData.bind(this));
 
-    draw.add(poly);
+    const poly = polygon([coordinates]);
+    poly.id = 1;
+    poly.properties.overlaySourceId = 'test-overlay';
+    poly.properties.type = 'overlay';
+    this._draw.add(poly);
 
-    draw.changeMode('tx_rect', {
+    this._draw.changeMode('tx_rect', {
         featureId: poly.id, // required
 
         rotatePivot: TxCenter.Opposite,   // rotate around center
         scaleCenter: TxCenter.Opposite, // scale around opposite vertex
     });
+
+    this._map.on('draw.selectionchange', this._onDrawSelection.bind(this));
+};
+
+TxRectModeDemo.prototype._onDrawSelection = function(e) {
+    const {features, points} = e;
+    if (features.length <= 0) {
+        return;
+    }
+
+    var feature = features[0];
+    if (feature.geometry.type == 'Polygon' && feature.id) {
+        this._draw.changeMode('tx_rect', {
+            featureId: feature.id, // required
+
+            rotatePivot: TxCenter.Opposite,   // rotate around center
+            scaleCenter: TxCenter.Opposite, // scale around opposite vertex
+        });
+    }
+
+
 };
 
 TxRectModeDemo.prototype._onData = function(e) {
@@ -120,7 +147,9 @@ TxRectModeDemo.prototype._onData = function(e) {
             // var source = this.map.getSource(e.sourceId);
             //var geojson = source._data;
             var geojson = e.source.data;
-            if (geojson && geojson.features && geojson.features.length > 0) {
+            if (geojson && geojson.features && geojson.features.length > 0
+                && geojson.features[0].properties
+                && geojson.features[0].properties.user_overlaySourceId) {
                 this._drawUpdateOverlayByFeature(geojson.features[0]);
             }
         }
@@ -129,7 +158,8 @@ TxRectModeDemo.prototype._onData = function(e) {
 
 TxRectModeDemo.prototype._drawUpdateOverlayByFeature = function(feature) {
     var coordinates = feature.geometry.coordinates[0].slice(0, 4);
-    this._map.getSource("test-overlay").setCoordinates(coordinates);
+    var overlaySourceId = feature.properties.user_overlaySourceId;
+    this._map.getSource(overlaySourceId).setCoordinates(coordinates);
 };
 
 var drawStyle = [
@@ -139,22 +169,95 @@ var drawStyle = [
         'filter': ['all',
             ['==', 'active', 'false'],
             ['==', '$type', 'Polygon'],
+            ['!=', 'user_type', 'overlay'],
             ['!=', 'mode', 'static']
         ],
         'paint': {
             'fill-color': '#3bb2d0',
             'fill-outline-color': '#3bb2d0',
-            'fill-opacity': 0.0
+            'fill-opacity': 0.7
         }
     },
     {
         'id': 'gl-draw-polygon-fill-active',
         'type': 'fill',
-        'filter': ['all', ['==', 'active', 'true'], ['==', '$type', 'Polygon']],
+        'filter': ['all',
+            ['==', 'active', 'true'],
+            ['==', '$type', 'Polygon'],
+            ['!=', 'user_type', 'overlay'],
+        ],
         'paint': {
             'fill-color': '#fbb03b',
             'fill-outline-color': '#fbb03b',
-            'fill-opacity': 0.0
+            'fill-opacity': 0.7
+        }
+    },
+
+
+    {
+        'id': 'gl-draw-overlay-polygon-fill-inactive',
+        'type': 'fill',
+        'filter': ['all',
+            ['==', 'active', 'false'],
+            ['==', '$type', 'Polygon'],
+            ['==', 'user_type', 'overlay'],
+            ['!=', 'mode', 'static']
+        ],
+        'paint': {
+            'fill-color': '#3bb2d0',
+            'fill-outline-color': '#3bb2d0',
+            'fill-opacity': 0.05
+        }
+    },
+    {
+        'id': 'gl-draw-overlay-polygon-fill-active',
+        'type': 'fill',
+        'filter': ['all',
+            ['==', 'active', 'true'],
+            ['==', '$type', 'Polygon'],
+            ['==', 'user_type', 'overlay'],
+        ],
+        'paint': {
+            'fill-color': '#fbb03b',
+            'fill-outline-color': '#fbb03b',
+            'fill-opacity': 0.05
+        }
+    },
+
+    {
+        'id': 'gl-draw-polygon-stroke-inactive',
+        'type': 'line',
+        'filter': ['all',
+            ['==', 'active', 'false'],
+            ['==', '$type', 'Polygon'],
+            ['!=', 'user_type', 'overlay'],
+            ['!=', 'mode', 'static']
+        ],
+        'layout': {
+            'line-cap': 'round',
+            'line-join': 'round'
+        },
+        'paint': {
+            'line-color': '#3bb2d0',
+            'line-width': 2
+        }
+    },
+
+    {
+        'id': 'gl-draw-polygon-stroke-active',
+        'type': 'line',
+        'filter': ['all',
+            ['==', 'active', 'true'],
+            ['==', '$type', 'Polygon'],
+        ],
+        'layout': {
+            'line-cap': 'round',
+            'line-join': 'round'
+        },
+        'paint': {
+            'line-color': '#fbb03b',
+            'line-dasharray': [0.2, 2],
+            'line-width': 2
         }
     },
 
@@ -170,37 +273,6 @@ var drawStyle = [
     //     }
     // },
 
-    {
-        'id': 'gl-draw-polygon-stroke-inactive',
-        'type': 'line',
-        'filter': ['all',
-            ['==', 'active', 'false'],
-            ['==', '$type', 'Polygon'],
-            ['!=', 'mode', 'static']
-        ],
-        'layout': {
-            'line-cap': 'round',
-            'line-join': 'round'
-        },
-        'paint': {
-            'line-color': '#3bb2d0',
-            'line-width': 2
-        }
-    },
-    {
-        'id': 'gl-draw-polygon-stroke-active',
-        'type': 'line',
-        'filter': ['all', ['==', 'active', 'true'], ['==', '$type', 'Polygon']],
-        'layout': {
-            'line-cap': 'round',
-            'line-join': 'round'
-        },
-        'paint': {
-            'line-color': '#fbb03b',
-            'line-dasharray': [0.2, 2],
-            'line-width': 2
-        }
-    },
     {
         'id': 'gl-draw-line-inactive',
         'type': 'line',

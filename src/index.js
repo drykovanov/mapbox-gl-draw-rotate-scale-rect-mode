@@ -44,6 +44,8 @@ function parseTxCenter(value, defaultTxCenter = TxCenter.Center) {
         featureId: ...,
         rotatePivot: default 'center' or 'opposite',
         scaleCenter: default 'center' or 'opposite',
+
+        canSelectFeatures: default true,    // can exit to simple_select mode
     }
  */
 TxRectMode.onSetup = function(opts) {
@@ -55,12 +57,12 @@ TxRectMode.onSetup = function(opts) {
     }
 
     if (feature.type != Constants.geojsonTypes.POLYGON) {
-        throw new TypeError('tx_rect mode doesn\'t handle only rectangles');
+        throw new TypeError('tx_rect mode can handle only rectangles');
     }
     if (feature.coordinates === undefined
         || feature.coordinates.length != 1
         || feature.coordinates[0].length != 4) {
-        throw new TypeError('tx_rect mode doesn\'t handle only rectangles');
+        throw new TypeError('tx_rect mode can handle only rectangles');
     }
 
     const state = {
@@ -69,6 +71,8 @@ TxRectMode.onSetup = function(opts) {
 
         rotatePivot: parseTxCenter(opts.rotatePivot, TxCenter.Center),
         scaleCenter: parseTxCenter(opts.scaleCenter, TxCenter.Center),
+
+        canSelectFeatures: opts.canSelectFeatures ? opts.canSelectFeatures : true,
 
         dragMoveLocation: opts.startPos || null,
         dragMoving: false,
@@ -500,10 +504,14 @@ TxRectMode.onClick = function(state, e) {
     this.stopDragging(state);
 };
 
-TxRectMode.clickNoTarget = function () {
-    // this.changeMode(Constants.modes.SIMPLE_SELECT);
+TxRectMode.clickNoTarget = function (state, e) {
+    if (state.canSelectFeatures)
+        this.changeMode(Constants.modes.SIMPLE_SELECT);
 };
 
-TxRectMode.clickInactive = function () {
-    // this.changeMode(Constants.modes.SIMPLE_SELECT);
+TxRectMode.clickInactive = function (state, e) {
+    if (state.canSelectFeatures)
+        this.changeMode(Constants.modes.SIMPLE_SELECT, {
+            featureIds: [e.featureTarget.properties.id]
+        });
 };
