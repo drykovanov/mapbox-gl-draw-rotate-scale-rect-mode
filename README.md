@@ -59,6 +59,7 @@ Second, create your rectangle polygon (with [turf](https://turfjs.org/docs/#poly
 * `scaleCenter` - change scaling center to the opposite vertex
 * `canScale` - set false to disable scaling
 * `canRotate` - set false to disable rotation
+* `canSelectFeatures' - set false to forbid exiting the mode
 ```js
     draw.changeMode('tx_poly', {
         featureId: poly.id, // required
@@ -68,6 +69,8 @@ Second, create your rectangle polygon (with [turf](https://turfjs.org/docs/#poly
 
         rotatePivot: TxCenter.Center,   // rotate around center
         scaleCenter: TxCenter.Opposite, // scale around opposite vertex
+        
+        canSelectFeatures: true,
     });
 ```
 See how scaling and rotation around opposite side works:
