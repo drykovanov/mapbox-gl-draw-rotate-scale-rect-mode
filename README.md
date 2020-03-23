@@ -31,7 +31,7 @@ There is an example of styling in [demo.js](/src/demo.js) and icon set for [scal
         },
 
         modes: Object.assign({
-            tx_rect: TxRectMode,
+            tx_poly: TxRectMode,
         }, MapboxDraw.modes),
 
         styles: drawStyle,
@@ -48,7 +48,7 @@ Second, create your rectangle polygon (with [turf](https://turfjs.org/docs/#poly
     
     draw.add(poly);
 
-    draw.changeMode('tx_rect', {
+    draw.changeMode('tx_poly', {
         featureId: poly.id, // required
     });
 ```
@@ -58,7 +58,7 @@ Second, create your rectangle polygon (with [turf](https://turfjs.org/docs/#poly
 * `rotatePivot` - change rotation pivot to the middle of the opposite polygon side
 * `scaleCenter` - change scaling center to the opposite vertex
 ```js
-    draw.changeMode('tx_rect', {
+    draw.changeMode('tx_poly', {
         featureId: poly.id, // required
 
         rotatePivot: TxCenter.Center,   // rotate around center
