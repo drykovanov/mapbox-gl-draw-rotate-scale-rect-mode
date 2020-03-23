@@ -22,7 +22,24 @@
 
     <script>
         window.onload = function() {
-            TxRectMode.tx_rect_mode_demo();
+            var nycDemo = {
+                mapCenter: [-73.93, 40.73],
+                mapZoom: 9,
+                imageUrl: 'nyc_1911_crop.jpg',
+                imageWidth: 421,
+                imageHeight: 671,
+            };
+
+            var floorplanDemo = {
+                mapCenter: [30.387850, 59.994247],
+                mapZoom: 19,
+                imageUrl: '03_image_bin_masked.png',
+                imageWidth: 751,
+                imageHeight: 345,
+            };
+
+            var demo = new TxRectMode.TxRectModeDemo(floorplanDemo);
+            demo.start();
         };
 
     </script>
