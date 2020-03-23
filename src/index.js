@@ -42,6 +42,10 @@ function parseTxCenter(value, defaultTxCenter = TxCenter.Center) {
 /*
     opts = {
         featureId: ...,
+
+        canScale: default true,
+        canRotate: default true,
+
         rotatePivot: default 'center' or 'opposite',
         scaleCenter: default 'center' or 'opposite',
 
@@ -49,11 +53,14 @@ function parseTxCenter(value, defaultTxCenter = TxCenter.Center) {
     }
  */
 TxRectMode.onSetup = function(opts) {
-    const featureId = opts.featureId;
+    const featureId =
+        (opts.featureIds && Array.isArray(opts.featureIds) && opts.featureIds.length > 0) ?
+            opts.featureIds[0] : opts.featureId;
+
     const feature = this.getFeature(featureId);
 
     if (!feature) {
-        throw new Error('You must provide a featureId to enter tx_poly mode');
+        throw new Error('You must provide a valid featureId to enter tx_poly mode');
     }
 
     if (feature.type != Constants.geojsonTypes.POLYGON) {
@@ -69,16 +76,24 @@ TxRectMode.onSetup = function(opts) {
         featureId,
         feature,
 
+        canScale: opts.canScale != undefined ? opts.canScale : true,
+        canRotate: opts.canRotate != undefined ? opts.canRotate : true,
+
         rotatePivot: parseTxCenter(opts.rotatePivot, TxCenter.Center),
         scaleCenter: parseTxCenter(opts.scaleCenter, TxCenter.Center),
 
         canSelectFeatures: opts.canSelectFeatures != undefined ? opts.canSelectFeatures : true,
+        // selectedFeatureMode: opts.selectedFeatureMode != undefined ? opts.selectedFeatureMode : 'simple_select',
 
         dragMoveLocation: opts.startPos || null,
         dragMoving: false,
         canDragMove: false,
         selectedCoordPaths: opts.coordPath ? [opts.coordPath] : []
     };
+
+    if (!(state.canRotate || state.canScale)) {
+        console.warn('Non of canScale or canRotate is true');
+    }
 
     this.setSelectedCoordinates(this.pathsToCoordinates(featureId, state.selectedCoordPaths));
     this.setSelected(featureId);
@@ -95,15 +110,23 @@ TxRectMode.toDisplayFeatures = function(state, geojson, push) {
     if (state.featureId === geojson.properties.id) {
         geojson.properties.active = Constants.activeStates.ACTIVE;
         push(geojson);
+
+
         var suppPoints = createSupplementaryPoints(geojson, {
             map: this.map,
             midpoints: false,
             selectedPaths: state.selectedCoordPaths
         });
-        this.computeBisectrix(suppPoints);
-        var rotPoints = this.createRotationPoints(state, geojson, suppPoints);
-        suppPoints.forEach(push);
-        rotPoints.forEach(push);
+
+        if (state.canScale) {
+            this.computeBisectrix(suppPoints);
+            suppPoints.forEach(push);
+        }
+
+        if (state.canRotate) {
+            var rotPoints = this.createRotationPoints(state, geojson, suppPoints);
+            rotPoints.forEach(push);
+        }
     } else {
         geojson.properties.active = Constants.activeStates.INACTIVE;
         push(geojson);
