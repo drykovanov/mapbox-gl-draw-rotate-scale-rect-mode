@@ -73,6 +73,8 @@ TxRectModeDemo.prototype._txEdit = function(featureId) {
     this._draw.changeMode('tx_poly', {
         featureId: featureId, // required
 
+        canTrash: false,
+
         canScale: true,
         canRotate: true,    // only rotation enabled
 

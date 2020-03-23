@@ -76,6 +76,8 @@ TxRectMode.onSetup = function(opts) {
         featureId,
         feature,
 
+        canTrash: opts.canTrash != undefined ? opts.canTrash : true,
+
         canScale: opts.canScale != undefined ? opts.canScale : true,
         canRotate: opts.canRotate != undefined ? opts.canRotate : true,
 
@@ -103,7 +105,9 @@ TxRectMode.onSetup = function(opts) {
     doubleClickZoom.disable(this);
 
     this.setActionableState({
-        trash: true
+        combineFeatures: false,
+        uncombineFeatures: false,
+        trash: state.canTrash
     });
 
     return state;
@@ -139,7 +143,7 @@ TxRectMode.toDisplayFeatures = function(state, geojson, push) {
     this.setActionableState({
         combineFeatures: false,
         uncombineFeatures: false,
-        trash: false
+        trash: state.canTrash
     });
 
     // this.fireUpdate();
@@ -532,4 +536,9 @@ TxRectMode.clickInactive = function (state, e) {
         this.changeMode(Constants.modes.SIMPLE_SELECT, {
             featureIds: [e.featureTarget.properties.id]
         });
+};
+
+TxRectMode.onTrash = function() {
+    this.deleteFeature(this.getSelectedIds());
+    // this.fireActionable();
 };
