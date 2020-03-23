@@ -79,6 +79,9 @@ TxRectMode.onSetup = function(opts) {
         canScale: opts.canScale != undefined ? opts.canScale : true,
         canRotate: opts.canRotate != undefined ? opts.canRotate : true,
 
+        singleRotationPoint: opts.singleRotationPoint != undefined ? opts.singleRotationPoint : false,
+        rotationPointRadius: opts.rotationPointRadius != undefined ? opts.rotationPointRadius : 1.0,
+
         rotatePivot: parseTxCenter(opts.rotatePivot, TxCenter.Center),
         scaleCenter: parseTxCenter(opts.scaleCenter, TxCenter.Center),
 
@@ -176,6 +179,31 @@ TxRectMode.computeBisectrix = function(points) {
 
 };
 
+TxRectMode._createRotationPoint = function(rotationWidgets, featureId, v1, v2, rotCenter, radiusScale) {
+    var cR0 = midpoint(v1, v2).geometry.coordinates;
+    var heading = bearing(rotCenter, cR0);
+    var distance0 = distance(rotCenter, cR0);
+    var distance1 = radiusScale * distance0; // TODO depends on map scale
+    var cR1 = destination(rotCenter, distance1, heading, {}).geometry.coordinates;
+
+    rotationWidgets.push({
+            type: Constants.geojsonTypes.FEATURE,
+            properties: {
+                meta: Constants.meta.MIDPOINT,
+                parent: featureId,
+                lng: cR1[0],
+                lat: cR1[1],
+                coord_path: v1.properties.coord_path,
+                heading: heading,
+            },
+            geometry: {
+                type: Constants.geojsonTypes.POINT,
+                coordinates: cR1
+            }
+        }
+    );
+};
+
 TxRectMode.createRotationPoints = function(state, geojson, suppPoints) {
     const { type, coordinates } = geojson.geometry;
     const featureId = geojson.properties && geojson.properties.id;
@@ -190,52 +218,19 @@ TxRectMode.createRotationPoints = function(state, geojson, suppPoints) {
 
     var v1 = null;
 
-    var center0 = this.computeRotationCenter(state, geojson);
-    corners.forEach((v2) => {
-        if (v1 != null) {
-            var cR0 = midpoint(v1, v2).geometry.coordinates;
-            var heading = bearing(center0, cR0);
-            var distance0 = distance(center0, cR0);
-            var distance1 = 1.0 * distance0; // TODO paramter, TODO depends on map scale
-            var cR1 = destination(center0, distance0, heading, {}).geometry.coordinates;
+    var rotCenter = this.computeRotationCenter(state, geojson);
 
-            rotationWidgets.push({
-                    type: Constants.geojsonTypes.FEATURE,
-                    properties: {
-                        meta: Constants.meta.MIDPOINT,
-                        parent: featureId,
-                        lng: cR1[0],
-                        lat: cR1[1],
-                        coord_path: v1.properties.coord_path,
-                        heading: heading,
-                    },
-                    geometry: {
-                        type: Constants.geojsonTypes.POINT,
-                        coordinates: cR1
-                    }
-                }
-            );
+    if (state.singleRotationPoint) {
+        this._createRotationPoint(rotationWidgets, featureId, corners[0], corners[1], rotCenter, state.rotationPointRadius);
+    } else {
+        corners.forEach((v2) => {
+            if (v1 != null) {
+                this._createRotationPoint(rotationWidgets, featureId, v1, v2, rotCenter, state.rotationPointRadius);
+            }
 
-            // rotationWidgets.push({
-            //         type: Constants.geojsonTypes.FEATURE,
-            //         properties: {
-            //             meta: Constants.meta.MIDPOINT,
-            //             parent: featureId,
-            //             // lng: cR1[0],
-            //             // lat: cR1[1],
-            //             coord_path: v1.properties.coord_path
-            //         },
-            //         geometry: {
-            //             type: Constants.geojsonTypes.LINE_STRING,
-            //             coordinates: [cR0, cR1]
-            //         }
-            //     }
-            // );
-        }
-
-        v1 = v2;
-
-    });
+            v1 = v2;
+        });
+    }
 
     return rotationWidgets;
 };

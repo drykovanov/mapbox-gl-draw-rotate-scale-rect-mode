@@ -76,6 +76,9 @@ TxRectModeDemo.prototype._txEdit = function(featureId) {
         canScale: true,
         canRotate: true,    // only rotation enabled
 
+        singleRotationPoint: true,
+        rotationPointRadius: 1.2,   // extend rotation point outside polygon
+
         rotatePivot: TxCenter.Center,   // rotate around center
         scaleCenter: TxCenter.Opposite, // scale around opposite vertex
 
