@@ -72,7 +72,7 @@ TxRectMode.onSetup = function(opts) {
         rotatePivot: parseTxCenter(opts.rotatePivot, TxCenter.Center),
         scaleCenter: parseTxCenter(opts.scaleCenter, TxCenter.Center),
 
-        canSelectFeatures: opts.canSelectFeatures ? opts.canSelectFeatures : true,
+        canSelectFeatures: opts.canSelectFeatures != undefined ? opts.canSelectFeatures : true,
 
         dragMoveLocation: opts.startPos || null,
         dragMoving: false,
