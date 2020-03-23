@@ -64,19 +64,22 @@ TxRectModeDemo.prototype._onMapLoad = function(event) {
 
     this._map.on('data', this._onData.bind(this));
 
-    this._txEdit(1);
-
     this._map.on('draw.selectionchange', this._onDrawSelection.bind(this));
+
+    this._txEdit(1);
 };
 
 TxRectModeDemo.prototype._txEdit = function(featureId) {
     this._draw.changeMode('tx_poly', {
         featureId: featureId, // required
 
+        canScale: true,
+        canRotate: true,
+
         rotatePivot: TxCenter.Center,   // rotate around center
         scaleCenter: TxCenter.Opposite, // scale around opposite vertex
 
-        // canSelectFeatures: false,
+        canSelectFeatures: true,
     });
 };
 
