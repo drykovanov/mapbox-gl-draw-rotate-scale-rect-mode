@@ -64,14 +64,20 @@ TxRectModeDemo.prototype._onMapLoad = function(event) {
 
     this._map.on('data', this._onData.bind(this));
 
+    this._txEdit(1);
+
+    this._map.on('draw.selectionchange', this._onDrawSelection.bind(this));
+};
+
+TxRectModeDemo.prototype._txEdit = function(featureId) {
     this._draw.changeMode('tx_poly', {
-        featureId: 1, // required
+        featureId: featureId, // required
 
         rotatePivot: TxCenter.Center,   // rotate around center
         scaleCenter: TxCenter.Opposite, // scale around opposite vertex
-    });
 
-    this._map.on('draw.selectionchange', this._onDrawSelection.bind(this));
+        // canSelectFeatures: false,
+    });
 };
 
 
@@ -103,11 +109,7 @@ TxRectModeDemo.prototype._createDemoFeatures = function() {
     poly.id = this._nextFeatureId++;
     this._draw.add(poly);
 
-
-
 };
-
-
 
 TxRectModeDemo.prototype._createDemoOverlay = function() {
     var im_w = this._demoParams.imageWidth;
@@ -162,15 +164,8 @@ TxRectModeDemo.prototype._onDrawSelection = function(e) {
 
     var feature = features[0];
     if (feature.geometry.type == 'Polygon' && feature.id) {
-        this._draw.changeMode('tx_poly', {
-            featureId: feature.id, // required
-
-            rotatePivot: TxCenter.Center,   // rotate around center
-            scaleCenter: TxCenter.Opposite, // scale around opposite vertex
-        });
+        this._txEdit(feature.id);
     }
-
-
 };
 
 TxRectModeDemo.prototype._onData = function(e) {
@@ -244,7 +239,7 @@ var drawStyle = [
         'paint': {
             'fill-color': '#3bb2d0',
             'fill-outline-color': '#3bb2d0',
-            'fill-opacity': 0.05
+            'fill-opacity': 0.01
         }
     },
     {
@@ -258,7 +253,7 @@ var drawStyle = [
         'paint': {
             'fill-color': '#fbb03b',
             'fill-outline-color': '#fbb03b',
-            'fill-opacity': 0.05
+            'fill-opacity': 0.01
         }
     },
 
@@ -378,7 +373,8 @@ var drawStyle = [
         'filter': ['all',
             ['==', 'meta', 'vertex'],
             ['==', '$type', 'Point'],
-            ['!=', 'mode', 'static']
+            ['!=', 'mode', 'static'],
+            ['has', 'heading']
         ],
         'layout': {
             'icon-image': 'scale',
