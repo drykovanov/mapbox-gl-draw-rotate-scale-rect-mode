@@ -22,7 +22,7 @@ First, init [MapboxDraw](https://github.com/mapbox/mapbox-gl-draw/blob/master/do
 
 There is an example of styling in [demo.js](/src/demo.js) and icon set for [scaling](/demo/scale/) and [rotation](/demo/rotate/).
 
-```
+```js
     import { TxRectMode, TxCenter } from 'mapbox-gl-draw-rotate-scale-rect-mode';
     ...
     const draw = new MapboxDraw({
@@ -40,7 +40,7 @@ There is an example of styling in [demo.js](/src/demo.js) and icon set for [scal
 
 
 Second, create your rectangle polygon (with [turf](https://turfjs.org/docs/#polygon)) and provide it's _featureId_ to `changeMode()`:
-```
+```js
 
     const coordinates = [cUL,cUR,cLR,cLL,cUL];
     const poly = turf.polygon([coordinates]);
@@ -57,7 +57,7 @@ Second, create your rectangle polygon (with [turf](https://turfjs.org/docs/#poly
 `changeMode()` accepts following parameters:
 * `rotatePivot` - change rotation pivot to the middle of the opposite polygon side
 * `scaleCenter` - change scaling center to the opposite vertex
-```
+```js
     draw.changeMode('tx_rect', {
         featureId: poly.id, // required
 
@@ -65,3 +65,6 @@ Second, create your rectangle polygon (with [turf](https://turfjs.org/docs/#poly
         scaleCenter: TxCenter.Opposite, // scale around opposite vertex
     });
 ```
+See how scaling and rotation around opposite side works:
+
+![Demo gif](/docs/tx_center.gif)
