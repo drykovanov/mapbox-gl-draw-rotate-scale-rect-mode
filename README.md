@@ -57,9 +57,14 @@ Second, create your rectangle polygon (with [turf](https://turfjs.org/docs/#poly
 `changeMode()` accepts following parameters:
 * `rotatePivot` - change rotation pivot to the middle of the opposite polygon side
 * `scaleCenter` - change scaling center to the opposite vertex
+* `canScale` - set false to disable scaling
+* `canRotate` - set false to disable rotation
 ```js
     draw.changeMode('tx_poly', {
         featureId: poly.id, // required
+        
+        canScale: false,
+        canRotate: true,    // only rotation enabled
 
         rotatePivot: TxCenter.Center,   // rotate around center
         scaleCenter: TxCenter.Opposite, // scale around opposite vertex
