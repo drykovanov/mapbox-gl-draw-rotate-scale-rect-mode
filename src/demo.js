@@ -3,6 +3,135 @@ import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import { polygon } from "@turf/helpers";
 import {TxRectMode, TxCenter } from "./index";
 
+// var demoParams = {
+//     mapCenter: [-73.93, 40.73],
+//     mapZoom: 9,
+//     imageUrl: 'nyc_1911_crop.jpg',
+//     imageWidth: 421,
+//     imageHeight: 671,
+// };
+export function TxRectModeDemo(demoParams) {
+    this._demoParams = demoParams;
+}
+
+TxRectModeDemo.prototype.start = function() {
+    mapboxgl.accessToken = 'pk.eyJ1IjoiZHJ5a292YW5vdiIsImEiOiJjazM0OG9hYW4wenR4M2xtajVseW1qYjY3In0.YnbkeuaBiSaDOn7eYDAXsQ';
+    this._map = new mapboxgl.Map({
+        container: 'map', // container id
+        style: 'mapbox://styles/mapbox/streets-v11', // stylesheet location
+        center: this._demoParams.mapCenter,
+        zoom: this._demoParams.mapZoom, // starting zoom
+        // fadeDuration: 0 //
+    });
+
+    this._map.on('load', this._onMapLoad.bind(this));
+};
+
+TxRectModeDemo.prototype._onMapLoad = function(event) {
+    var map = event.target;
+
+    map.loadImage('rotate/01.png', function(error, image) {
+        if (error) throw error;
+        map.addImage('rotate', image);
+    });
+
+    map.loadImage('scale/01.png', function(error, image) {
+        if (error) throw error;
+        map.addImage('scale', image);
+    });
+
+    const draw = new MapboxDraw({
+        displayControlsDefault: false,
+        controls: {
+            // trash: true
+        },
+
+        modes: Object.assign({
+            tx_rect: TxRectMode,
+        }, MapboxDraw.modes),
+
+        styles: drawStyle,
+    });
+
+    var im_w = this._demoParams.imageWidth;
+    var im_h = this._demoParams.imageHeight;
+
+
+    const canvas = map.getCanvas();
+    // Get the device pixel ratio, falling back to 1.
+    var dpr = window.devicePixelRatio || 1;
+    // Get the size of the canvas in CSS pixels.
+    var rect = canvas.getBoundingClientRect();
+    const w = rect.width;
+    const h = rect.height;
+    // console.log('canvas: ' + w + 'x' + h);
+
+    while (im_w >= (0.8 * w) || im_h >= (0.8 * h)) {
+        im_w = Math.round(0.8 * im_w);
+        im_h = Math.round(0.8 * im_h);
+    }
+
+    const cUL = map.unproject ([w/2 - im_w/2, h/2 - im_h/2]).toArray();
+    const cUR = map.unproject ([w/2 + im_w/2, h/2 - im_h/2]).toArray();
+    const cLR = map.unproject ([w/2 + im_w/2, h/2 + im_h/2]).toArray();
+    const cLL = map.unproject ([w/2 - im_w/2, h/2 + im_h/2]).toArray();
+    const coordinates = [cUL,cUR,cLR,cLL,cUL];
+    const poly = polygon([coordinates]);
+    poly.id = 1;
+
+    map.addSource("test-overlay", {
+        "type": "image",
+        "url": this._demoParams.imageUrl,
+        "coordinates": [cUL,cUR,cLR,cLL]
+    });
+
+    map.addLayer({
+        "id": "test-overlay-layer",
+        "type": "raster",
+        "source": "test-overlay",
+        "paint": {
+            "raster-opacity": 0.90,
+            "raster-fade-duration": 0
+        },
+    });
+    map.addControl(draw, 'top-right');
+
+    map.on('data', this._onData.bind(this));
+
+    draw.add(poly);
+
+    draw.changeMode('tx_rect', {
+        featureId: poly.id, // required
+
+        rotatePivot: TxCenter.Opposite,   // rotate around center
+        scaleCenter: TxCenter.Opposite, // scale around opposite vertex
+    });
+};
+
+TxRectModeDemo.prototype._onData = function(e) {
+    if (e.sourceId && e.sourceId.startsWith('mapbox-gl-draw-')) {
+        // console.log(e.sourceId);
+        if (e.type && e.type == 'data'
+            && e.source.data
+            // && e.sourceDataType && e.sourceDataType == 'content'
+            && e.sourceDataType == undefined
+            && e.isSourceLoaded
+        ) {
+            // var source = this.map.getSource(e.sourceId);
+            //var geojson = source._data;
+            var geojson = e.source.data;
+            if (geojson && geojson.features && geojson.features.length > 0) {
+                this._drawUpdateOverlayByFeature(geojson.features[0]);
+            }
+        }
+    }
+};
+
+TxRectModeDemo.prototype._drawUpdateOverlayByFeature = function(feature) {
+    var coordinates = feature.geometry.coordinates[0].slice(0, 4);
+    this._map.getSource("test-overlay").setCoordinates(coordinates);
+};
+
 var drawStyle = [
     {
         'id': 'gl-draw-polygon-fill-inactive',
@@ -40,8 +169,6 @@ var drawStyle = [
     //         'circle-color': '#fbb03b'
     //     }
     // },
-
-
 
     {
         'id': 'gl-draw-polygon-stroke-inactive',
@@ -260,7 +387,6 @@ var drawStyle = [
         }
     },
 
-
     // {
     //     'id': 'gl-draw-polygon-rotate-point',
     //     'type': 'circle',
@@ -342,149 +468,3 @@ var drawStyle = [
         }
     },
 ];
-
-
-
-
-// draw.update is out of sync with actual drawn polygon
-// map.on('draw.update', drawUpdateOverlay.bind({
-//     map: map
-// }));
-
-// map.on('draw.render', drawUpdateOverlayByFeature.bind({map: map, feature: polygon, draw: draw}));
-// map.on('data', drawUpdateOverlayByFeature.bind({map: map, feature: polygon, draw: draw}));
-
-
-
-function onData(e) {
-    if (e.sourceId && e.sourceId.startsWith('mapbox-gl-draw-')) {
-        // console.log(e.sourceId);
-        if (e.type && e.type == 'data'
-            && e.source.data
-            // && e.sourceDataType && e.sourceDataType == 'content'
-            && e.sourceDataType == undefined
-            && e.isSourceLoaded
-        ) {
-            // var source = this.map.getSource(e.sourceId);
-            //var geojson = source._data;
-            var geojson = e.source.data;
-            if (geojson && geojson.features && geojson.features.length > 0) {
-                drawUpdateOverlayByFeature(geojson.features[0], this.map);
-            }
-        }
-    }
-}
-
-function drawUpdateOverlayByFeature(feature, map) {
-    var coordinates = feature.geometry.coordinates[0].slice(0, 4);
-    map.getSource("test-overlay").setCoordinates(coordinates);
-}
-
-
-// var nycDemo = {
-//     mapCenter: [-73.93, 40.73],
-//     mapZoom: 9,
-//     imageUrl: 'nyc_1911_crop.jpg',
-//     imageWidth: 421,
-//     imageHeight: 671,
-// };
-export function TxRectModeDemo(demoParams) {
-    this._demoParams = demoParams;
-}
-
-TxRectModeDemo.prototype.start = function() {
-    mapboxgl.accessToken = 'pk.eyJ1IjoiZHJ5a292YW5vdiIsImEiOiJjazM0OG9hYW4wenR4M2xtajVseW1qYjY3In0.YnbkeuaBiSaDOn7eYDAXsQ';
-    this._map = new mapboxgl.Map({
-        container: 'map', // container id
-        style: 'mapbox://styles/mapbox/streets-v11', // stylesheet location
-        center: this._demoParams.mapCenter,
-        zoom: this._demoParams.mapZoom, // starting zoom
-        // fadeDuration: 0 //
-    });
-
-    this._map.on('load', this._onMapLoad.bind(this));
-};
-
-TxRectModeDemo.prototype._onMapLoad = function(event) {
-    var map = event.target;
-
-    map.loadImage('rotate/01.png', function(error, image) {
-        if (error) throw error;
-        map.addImage('rotate', image);
-    });
-
-    map.loadImage('scale/01.png', function(error, image) {
-        if (error) throw error;
-        map.addImage('scale', image);
-    });
-
-    const draw = new MapboxDraw({
-        displayControlsDefault: false,
-        controls: {
-            // trash: true
-        },
-
-        modes: Object.assign({
-            tx_rect: TxRectMode,
-        }, MapboxDraw.modes),
-
-        styles: drawStyle,
-    });
-
-    var im_w = this._demoParams.imageWidth;
-    var im_h = this._demoParams.imageHeight;
-
-
-    const canvas = map.getCanvas();
-    // Get the device pixel ratio, falling back to 1.
-    var dpr = window.devicePixelRatio || 1;
-    // Get the size of the canvas in CSS pixels.
-    var rect = canvas.getBoundingClientRect();
-    const w = rect.width;
-    const h = rect.height;
-    // console.log('canvas: ' + w + 'x' + h);
-
-    while (im_w >= (0.8 * w) || im_h >= (0.8 * h)) {
-        im_w = Math.round(0.8 * im_w);
-        im_h = Math.round(0.8 * im_h);
-    }
-
-    const cUL = map.unproject ([w/2 - im_w/2, h/2 - im_h/2]).toArray();
-    const cUR = map.unproject ([w/2 + im_w/2, h/2 - im_h/2]).toArray();
-    const cLR = map.unproject ([w/2 + im_w/2, h/2 + im_h/2]).toArray();
-    const cLL = map.unproject ([w/2 - im_w/2, h/2 + im_h/2]).toArray();
-    const coordinates = [cUL,cUR,cLR,cLL,cUL];
-    const poly = polygon([coordinates]);
-    poly.id = 1;
-
-    map.addSource("test-overlay", {
-        "type": "image",
-        "url": this._demoParams.imageUrl,
-        "coordinates": [cUL,cUR,cLR,cLL]
-    });
-
-    map.addLayer({
-        "id": "test-overlay-layer",
-        "type": "raster",
-        "source": "test-overlay",
-        "paint": {
-            "raster-opacity": 0.90,
-            "raster-fade-duration": 0
-        },
-    });
-    map.addControl(draw, 'top-right');
-
-    map.on('data', onData.bind({
-        draw: draw,
-        map: map
-    }));
-
-    draw.add(poly);
-
-    draw.changeMode('tx_rect', {
-        featureId: poly.id, // required
-
-        rotatePivot: TxCenter.Opposite,   // rotate around center
-        scaleCenter: TxCenter.Opposite, // scale around opposite vertex
-    });
-};
