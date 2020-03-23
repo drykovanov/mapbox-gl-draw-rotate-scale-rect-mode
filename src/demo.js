@@ -109,7 +109,7 @@ TxRectModeDemo.prototype._onMapLoad = function(event) {
     this._draw.changeMode('tx_rect', {
         featureId: poly.id, // required
 
-        rotatePivot: TxCenter.Opposite,   // rotate around center
+        rotatePivot: TxCenter.Center,   // rotate around center
         scaleCenter: TxCenter.Opposite, // scale around opposite vertex
     });
 
@@ -127,7 +127,7 @@ TxRectModeDemo.prototype._onDrawSelection = function(e) {
         this._draw.changeMode('tx_rect', {
             featureId: feature.id, // required
 
-            rotatePivot: TxCenter.Opposite,   // rotate around center
+            rotatePivot: TxCenter.Center,   // rotate around center
             scaleCenter: TxCenter.Opposite, // scale around opposite vertex
         });
     }

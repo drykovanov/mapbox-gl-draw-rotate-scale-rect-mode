@@ -57,12 +57,12 @@ TxRectMode.onSetup = function(opts) {
     }
 
     if (feature.type != Constants.geojsonTypes.POLYGON) {
-        throw new TypeError('tx_rect mode can handle only rectangles');
+        throw new TypeError('tx_rect mode can only handle polygons');
     }
     if (feature.coordinates === undefined
         || feature.coordinates.length != 1
-        || feature.coordinates[0].length != 4) {
-        throw new TypeError('tx_rect mode can handle only rectangles');
+        || feature.coordinates[0].length <= 2) {
+        throw new TypeError('tx_rect mode can only handle polygons');
     }
 
     const state = {
