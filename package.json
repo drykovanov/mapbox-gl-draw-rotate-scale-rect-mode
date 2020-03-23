@@ -1,6 +1,6 @@
 {
   "name": "mapbox-gl-draw-rotate-scale-rect-mode",
-  "version": "0.1.0",
+  "version": "0.1.8",
   "description": "mapbox-gl-draw plugin to scale and rotate rectangle on the map",
   "main": "src/index.js",
   "scripts": {
