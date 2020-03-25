@@ -66,7 +66,20 @@ TxRectModeDemo.prototype._onMapLoad = function(event) {
 
     this._map.on('draw.selectionchange', this._onDrawSelection.bind(this));
 
+    this._map.on('click', this._onClick.bind(this));
+    this._map.on('touchstart', this._onClick.bind(this));
+
     this._txEdit(1);
+};
+
+TxRectModeDemo.prototype._onClick = function(e) {
+    var features = this._map.queryRenderedFeatures(e.point);
+    if (features.length > 0) {
+        var feature = features[0].toJSON();
+        if (feature.geometry.type == 'Polygon' && feature.properties.id) {
+            this._txEdit(feature.properties.id);
+        }
+    }
 };
 
 TxRectModeDemo.prototype._txEdit = function(featureId) {

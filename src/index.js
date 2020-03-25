@@ -539,6 +539,7 @@ TxRectMode.clickInactive = function (state, e) {
 };
 
 TxRectMode.onTrash = function() {
+    // TODO check state.canTrash
     this.deleteFeature(this.getSelectedIds());
     // this.fireActionable();
 };
