@@ -14,7 +14,7 @@ Live demo is [here](https://drykovanov.github.io/TxRectMode/demo/demo.html)
 
 ## Installation:
 ```
-npm install git+https://github.com/drykovanov/mapbox-gl-draw-rotate-scale-rect-mode#0.1.7
+npm install git+https://github.com/drykovanov/mapbox-gl-draw-rotate-scale-rect-mode#0.1.10
 ```
 
 ## Usage examples:
