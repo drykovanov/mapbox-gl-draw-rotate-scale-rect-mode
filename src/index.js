@@ -456,31 +456,20 @@ TxRectMode.dragScalePoint = function(state, e, delta) {
         return ;
     }
 
-    var polygon = state.feature.toGeoJSON();
-
     var cIdx = this.coordinateIndex(state.selectedCoordPaths);
     // TODO validate cIdx
 
     var cCenter = state.scaling.centers[cIdx];
-    var center = point(cCenter);
-    var m1 = point([e.lngLat.lng, e.lngLat.lat]);
-
-    var dist = distance(center, m1, { units: 'meters'});
-    var scale = dist / state.scaling.distances[cIdx];
-
-    if (CommonSelectors.isShiftDown(e)) {
-        // TODO discrete scaling
-        scale = 0.05 * Math.round(scale / 0.05);
+    const dV = Math.abs(e.lngLat.lat - cCenter[1])
+    const dH = Math.abs(e.lngLat.lng - cCenter[0])
+    {
+        const n = cCenter[1] + dV
+        const s = cCenter[1] - dV
+        const e = cCenter[0] + dH
+        const w = cCenter[0] - dH
+        const polygon = [[w,n], [e,n], [e,s], [w,s], [w,n]]
+        state.feature.incomingCoords([polygon]);
     }
-
-    var scaledFeature = transformScale(state.scaling.feature0,
-        scale,
-        {
-            origin: cCenter,
-            mutate: false,
-        });
-
-    state.feature.incomingCoords(scaledFeature.geometry.coordinates);
     // TODO add option for this:
     this.fireUpdate();
 };
