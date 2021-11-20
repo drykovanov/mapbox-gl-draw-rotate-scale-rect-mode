@@ -3,7 +3,13 @@ import MapboxDraw from '@mapbox/mapbox-gl-draw';
 import * as Constants from '@mapbox/mapbox-gl-draw/src/constants';
 import doubleClickZoom from '@mapbox/mapbox-gl-draw/src/lib/double_click_zoom';
 import createSupplementaryPoints from '@mapbox/mapbox-gl-draw/src/lib/create_supplementary_points';
-import * as CommonSelectors from '@mapbox/mapbox-gl-draw/src/lib/common_selectors';
+import {
+    isOfMetaType,
+    isActiveFeature,
+    isShiftDown,
+    noTarget,
+    isInactiveFeature
+} from '@mapbox/mapbox-gl-draw/src/lib/common_selectors';
 import moveFeatures from '@mapbox/mapbox-gl-draw/src/lib/move_features';
 
 import {lineString, point} from '@turf/helpers';
@@ -252,13 +258,13 @@ TxRectMode.stopDragging = function(state) {
     state.dragMoveLocation = null;
 };
 
-const isRotatePoint = CommonSelectors.isOfMetaType(Constants.meta.MIDPOINT);
-const isVertex = CommonSelectors.isOfMetaType(Constants.meta.VERTEX);
+const isRotatePoint = isOfMetaType(Constants.meta.MIDPOINT);
+const isVertex = isOfMetaType(Constants.meta.VERTEX);
 
 TxRectMode.onTouchStart = TxRectMode.onMouseDown = function(state, e) {
     if (isVertex(e)) return this.onVertex(state, e);
     if (isRotatePoint(e)) return this.onRotatePoint(state, e);
-    if (CommonSelectors.isActiveFeature(e)) return this.onFeature(state, e);
+    if (isActiveFeature(e)) return this.onFeature(state, e);
     // if (isMidpoint(e)) return this.onMidpoint(state, e);
 };
 
@@ -434,7 +440,7 @@ TxRectMode.dragRotatePoint = function(state, e, delta) {
 
     var heading0 = state.rotation.headings[cIdx];
     var rotateAngle = heading1 - heading0; // in degrees
-    if (CommonSelectors.isShiftDown(e)) {
+    if (isShiftDown(e)) {
         rotateAngle = 5.0 * Math.round(rotateAngle / 5.0);
     }
 
@@ -468,7 +474,7 @@ TxRectMode.dragScalePoint = function(state, e, delta) {
     var dist = distance(center, m1, { units: 'meters'});
     var scale = dist / state.scaling.distances[cIdx];
 
-    if (CommonSelectors.isShiftDown(e)) {
+    if (isShiftDown(e)) {
         // TODO discrete scaling
         scale = 0.05 * Math.round(scale / 0.05);
     }
@@ -520,9 +526,9 @@ TxRectMode.clickActiveFeature = function (state) {
 };
 
 TxRectMode.onClick = function(state, e) {
-    if (CommonSelectors.noTarget(e)) return this.clickNoTarget(state, e);
-    if (CommonSelectors.isActiveFeature(e)) return this.clickActiveFeature(state, e);
-    if (CommonSelectors.isInactiveFeature(e)) return this.clickInactive(state, e);
+    if (noTarget(e)) return this.clickNoTarget(state, e);
+    if (isActiveFeature(e)) return this.clickActiveFeature(state, e);
+    if (isInactiveFeature(e)) return this.clickInactive(state, e);
     this.stopDragging(state);
 };
 
